@@ -143,10 +143,15 @@ public:
 
 #define CONCAT(x, y) x ## y
 #define CONCAT2(x, y) CONCAT(x, y)
+#ifdef __COUNTER__ 
+#define REGISTER_NAME CONCAT2(__LINE__, __COUNTER__)
+#else
+#define REGISTER_NAME __LINE__
+#endif
 
 // The BENCHMARK macro is a helper for creating benchmark functions and automatically registering them with the
 // registration class.
-#define BENCHMARK(x, f) benchpress::auto_register CONCAT2(register_, __LINE__)((x), (f));
+#define BENCHMARK(x, f) benchpress::auto_register CONCAT2(register_, REGISTER_NAME)((x), (f));
 
 /*
  * This function can be used to keep variables on the stack that would normally be optimised away
@@ -227,6 +232,9 @@ inline void clobber()
  * The result class is responsible for producing a printable string representation of a benchmark run.
  */
 class result {
+    using fsec_t = std::chrono::duration<double>;
+    //using duration_t = std::chrono::nanoseconds;
+
     size_t                   d_num_iterations;
     std::chrono::nanoseconds d_duration;
     size_t                   d_num_bytes;
@@ -242,7 +250,21 @@ public:
         if (d_num_iterations <= 0) {
             return 0;
         }
-        return d_duration.count() / d_num_iterations;
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(d_duration).count() / d_num_iterations;
+    }
+
+    size_t get_ms_per_op() const {
+        if (d_num_iterations <= 0) {
+            return 0;
+        }
+        return std::chrono::duration_cast<std::chrono::milliseconds>(d_duration).count() / d_num_iterations;
+    }
+
+    double get_s_per_op() const {
+        if (d_num_iterations <= 0) {
+            return 0;
+        }
+        return std::chrono::duration_cast<fsec_t>(d_duration).count() / d_num_iterations;
     }
 
     double get_mb_per_s() const {
@@ -256,12 +278,27 @@ public:
     std::string to_string() const {
         std::stringstream tmp;
         tmp << std::setw(12) << std::right << d_num_iterations;
+
         size_t npo = get_ns_per_op();
-        tmp << std::setw(12) << std::right << npo << std::setw(0) << " ns/op";
+        tmp << std::setw(18) << std::right << npo << std::setw(0) << " ns/op";
+
+        size_t mpo = get_ms_per_op();
+        if(mpo > 0){
+            tmp << std::setw(14) << std::right << mpo << std::setw(0) << " ms/op";
+        }
+
+        double spo = get_s_per_op();
+        if(spo > 0.01){
+            tmp << std::setw(14) << std::right 
+                << std::fixed << std::setprecision( 2 ) << spo
+                << std::setw(0) << " s/op";
+        }
+
         double mbs = get_mb_per_s();
         if (mbs > 0.0) {
-            tmp << std::setw(12) << std::right << mbs << std::setw(0) << " MB/s";
+            tmp << std::setw(14) << std::right << mbs << std::setw(0) << " MB/s";
         }
+
         return std::string(tmp.str());
     }
 };
@@ -416,7 +453,7 @@ void run_benchmarks(const options& opts) {
         if (std::regex_match(info.get_name(), match_r)) {
             context c(info, opts);
             auto r = c.run();
-            std::cout << std::setw(35) << std::left << info.get_name() << r.to_string() << std::endl;
+            std::cout << std::setw(80) << std::left << info.get_name() << r.to_string() << std::endl;
         }
     }
 }
@@ -481,3 +518,4 @@ int main(int argc, char** argv) {
 #endif
 
 #endif // BENCHPRESS_HPP
+
