@@ -500,7 +500,7 @@ void run_benchmarks(const options& opts) {
 
         auto benchmarks = registration::get_ptr()->get_benchmarks();
 
-        std::string prefix = (opts.get_plotdata())? "## "s : ""s;
+        std::string prefix = (opts.get_plotdata())? "## " : "";
 
         for (auto& info : benchmarks) {
             std::string name = info.get_name();
