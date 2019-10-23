@@ -1,3 +1,6 @@
+enable_testing()
+
+include(Catch)
 
 #
 # Locate test sources
@@ -22,5 +25,7 @@ IF (NOT CMAKE_CROSSCOMPILING)
 		target_include_directories(${T_NAME} PRIVATE ${ICU_INCLUDE_DIRS})
 		target_link_libraries(${T_NAME} PRIVATE ${ICU_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 		target_compile_options(${T_NAME} PRIVATE "-fno-omit-frame-pointer")
+
+		catch_discover_tests(${T_NAME})
 	ENDFOREACH (T_FILE ${test_SRCS})
 ENDIF (NOT CMAKE_CROSSCOMPILING)

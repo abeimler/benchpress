@@ -18,6 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-ADD_SUBDIRECTORY (benchpress)
-ADD_SUBDIRECTORY (examples)
-ADD_SUBDIRECTORY (test)
+add_subdirectory (benchpress)
+add_subdirectory (examples)
+
+include(CTest)
+if (BUILD_TESTING)
+    add_subdirectory (test)
+endif()
