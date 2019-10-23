@@ -31,7 +31,7 @@ SCENARIO( "bytes per second benchmark", "[benchmark]" ) {
                 REQUIRE( !ouput.empty() );
                 REQUIRE( lines.size() >= 1 );
 
-                REQUIRE_THAT( lines[0], Matches( "test bytes per second\\s+(\\d+)(\\s+[\\s\\d]+ns\\/op)(\\s+[\\s\\d]+ms\\/op)?(\\s+[\\s\\.\\d]+s\\/op)?" ) );
+                REQUIRE_THAT( lines[0], Matches( "test bytes per second\\s+(\\d+)(\\s+[\\s\\d]+ns\\/op)(\\s+[\\s\\d]+ms\\/op)?(\\s+[\\s\\.\\d]+s\\/op)?(\\s+[\\s\\.\\d]+MB\\/s)" ) );
             }
 
         }

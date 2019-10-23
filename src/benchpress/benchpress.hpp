@@ -444,7 +444,7 @@ public:
     }
 
     context& bytes(int64_t bytes) { d_num_bytes = bytes; return *this; }
-    void set_bytes(int64_t bytes) { set_bytes(bytes); }
+    void set_bytes(int64_t bytes) { d_num_bytes = bytes; }
 
     size_t ns_per_op() {
         if (d_num_iterations <= 0) {
