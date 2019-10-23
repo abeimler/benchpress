@@ -9,13 +9,16 @@
 
 #include "utils.h"
 
-BENCHMARK("test", [](benchpress::context* ctx) {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
+BENCHMARK("multi-threaded test", [](benchpress::context* ctx) {
+    ctx->run_parallel([](benchpress::parallel_context* pctx) {
+        while (pctx->next()) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    });
 })
 
-SCENARIO( "simple benchmark", "[benchmark]" ) {
+
+SCENARIO( "multi-threaded benchmark", "[benchmark]" ) {
 
     GIVEN( "default benchmark options" ) {
         benchpress::options bench_opts;
@@ -30,7 +33,7 @@ SCENARIO( "simple benchmark", "[benchmark]" ) {
                 REQUIRE( !ouput.empty() );
                 REQUIRE( lines.size() >= 1 );
 
-                REQUIRE_THAT( lines[0], Matches( "test\\s+(\\d+)(\\s+[\\s\\d]+ns\\/op)(\\s+[\\s\\d]+ms\\/op)?(\\s+[\\s\\.\\d]+s\\/op)?" ) );
+                REQUIRE_THAT( lines[0], Matches( "multi-threaded test\\s+(\\d+)(\\s+[\\s\\d]+ns\\/op)(\\s+[\\s\\d]+ms\\/op)?(\\s+[\\s\\.\\d]+s\\/op)?" ) );
             }
 
         }

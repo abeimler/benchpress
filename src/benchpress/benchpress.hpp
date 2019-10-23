@@ -38,6 +38,13 @@
 #include <set>
 #include <sstream>
 
+#define FMT_HEADER_ONLY
+#include "fmt/core.h"
+#include "fmt/format.h"
+#include "fmt/format-inl.h"
+#include "fmt/ostream.h"
+#include "fmt/chrono.h"
+
 namespace benchpress {
 
 /*
@@ -58,12 +65,14 @@ class options {
     size_t      d_benchtime;
     size_t      d_cpu;
     bool        d_plotdata;
+    int         d_col_width;
 public:
     options()
         : d_bench( { ".*" } )
         , d_benchtime(1)
         , d_cpu(std::thread::hardware_concurrency())
         , d_plotdata(false)
+        , d_col_width(16)
     {}
     options& bench(const std::vector<std::string>& bench) {
         d_bench = bench;
@@ -81,18 +90,35 @@ public:
         d_plotdata = plotdata;
         return *this;
     }
-    std::vector<std::string> get_bench() const {
+    options& colwidth(size_t col_width) {
+        d_col_width = col_width;
+        return *this;
+    }
+
+    std::vector<std::string> bench() const {
         return d_bench;
     }
-    size_t get_benchtime() const {
+    std::vector<std::string> get_bench() const { return bench(); }
+    
+    size_t benchtime() const {
         return d_benchtime;
     }
-    size_t get_cpu() const {
+    size_t get_benchtime() const { return benchtime(); }
+
+    size_t cpu() const {
         return d_cpu;
     }
-    bool get_plotdata() const {
+    size_t get_cpu() const { return cpu(); }
+
+    bool plotdata() const {
         return d_plotdata;
     }
+    bool get_plotdata() const { return plotdata(); }
+
+    int colwidth() const {
+        return d_col_width;
+    }
+    int get_colwidth() const { return colwidth(); }
 };
 
 class context;
@@ -114,6 +140,8 @@ public:
         , d_func(func)
     {}
 
+    std::string                   name() const { return d_name; }
+    std::function<void(context*)> func() const { return d_func; }
     std::string                   get_name() const { return d_name; }
     std::function<void(context*)> get_func() const { return d_func; }
 };
@@ -128,15 +156,17 @@ class registration {
     std::vector<benchmark_info> d_benchmarks;
 
 public:
-    static registration* get_ptr() {
+    static registration* ptr() {
         static std::unique_ptr<registration> d_this = std::make_unique<registration>();
         return d_this.get();
     }
+    static registration* get_ptr() { return ptr(); }
 
     void register_benchmark(benchmark_info& info) {
         d_benchmarks.push_back(info);
     }
 
+    std::vector<benchmark_info> benchmarks() { return d_benchmarks; }
     std::vector<benchmark_info> get_benchmarks() { return d_benchmarks; }
 };
 
@@ -147,7 +177,7 @@ class auto_register {
 public:
     auto_register(const std::string& name, std::function<void(context*)> func) {
         benchmark_info info(name, func);
-        registration::get_ptr()->register_benchmark(info);
+        registration::ptr()->register_benchmark(info);
     }
 };
 
@@ -264,76 +294,86 @@ public:
         , d_num_bytes(num_bytes)
     {}
 
-    void set_name(std::string name) {
+    result& name(std::string name) {
         d_name = name;
+        return *this;
     }
-    std::string get_name() const { return d_name; }
+    std::string name() const { return d_name; }
 
-    void set_col(std::string col) {
+    result& col(std::string col) {
         d_col = col;
+        return *this;
     }
-    std::string get_col() const { return d_col; }
+    std::string col() const { return d_col; }
 
-    void set_row(std::string row) {
+    result& row(std::string row) {
         d_row = row;
+        return *this;
     }
-    std::string get_row() const { return d_row; }
+    std::string row() const { return d_row; }
 
 
-    size_t get_ns_per_op() const {
+    size_t ns_per_op() const {
         if (d_num_iterations <= 0) {
             return 0;
         }
         return std::chrono::duration_cast<std::chrono::nanoseconds>(d_duration).count() / d_num_iterations;
     }
 
-    size_t get_ms_per_op() const {
+    size_t ms_per_op() const {
         if (d_num_iterations <= 0) {
             return 0;
         }
         return std::chrono::duration_cast<std::chrono::milliseconds>(d_duration).count() / d_num_iterations;
     }
 
-    double get_s_per_op() const {
+    double s_per_op() const {
         if (d_num_iterations <= 0) {
             return 0;
         }
         return std::chrono::duration_cast<fsec_t>(d_duration).count() / d_num_iterations;
     }
 
-    double get_mb_per_s() const {
+    double mb_per_s() const {
         if (d_num_iterations <= 0 || d_duration.count() <= 0 || d_num_bytes <= 0) {
             return 0;
         }
-        return ((double(d_num_bytes) * double(d_num_iterations) / double(1e6)) /
-                double(std::chrono::duration_cast<std::chrono::seconds>(d_duration).count()));
+        return (double(d_num_bytes) * double(d_num_iterations) / double(1e6)) /
+                std::chrono::duration<double>(d_duration).count();
     }
 
     std::string to_string() const {
         std::stringstream tmp;
-        tmp << std::setw(12) << std::right << d_num_iterations;
 
-        size_t npo = get_ns_per_op();
-        tmp << std::setw(18) << std::right << npo << std::setw(0) << " ns/op";
+        fmt::print(tmp, "{:>12}", d_num_iterations);
 
-        size_t mpo = get_ms_per_op();
+        //tmp << std::setw(18) << std::right << npo << std::setw(0) << " ns/op";
+        fmt::print(tmp, "{:>12} ns/op", ns_per_op());
+
+        size_t mpo = ms_per_op();
         if(mpo > 0){
-            tmp << std::setw(14) << std::right << mpo << std::setw(0) << " ms/op";
+            //tmp << std::setw(14) << std::right << mpo << std::setw(0) << " ms/op";
+            fmt::print(tmp, "{:>14} ms/op", mpo);
         }
 
-        double spo = get_s_per_op();
+        double spo = s_per_op();
         if(spo > 0.01){
+            /*
             tmp << std::setw(14) << std::right 
                 << std::fixed << std::setprecision( 2 ) << spo
                 << std::setw(0) << " s/op";
+            */
+
+            fmt::print(tmp, "{:>14.2f} s/op", spo);
         }
 
-        double mbs = get_mb_per_s();
+        double mbs = mb_per_s();
         if (mbs > 0.0) {
-            tmp << std::setw(14) << std::right << mbs << std::setw(0) << " MB/s";
+            //tmp << std::setw(14) << std::right << mbs << std::setw(0) << " MB/s";
+            fmt::print(tmp, "{:>14} MB/s", mbs);
         }
 
-        return std::string(tmp.str());
+        return tmp.str();
     }
 };
 
@@ -370,16 +410,18 @@ public:
         : d_timer_on(false)
         , d_start()
         , d_duration()
-        , d_benchtime(std::chrono::seconds(opts.get_benchtime()))
+        , d_benchtime(std::chrono::seconds(opts.benchtime()))
         , d_num_iterations(1)
-        , d_num_threads(opts.get_cpu())
+        , d_num_threads(opts.cpu())
         , d_num_bytes(0)
         , d_benchmark(info)
     {}
 
     size_t num_iterations() const { return d_num_iterations; }
+    size_t get_num_iterations() const { return d_num_iterations; }
 
-    void set_num_threads(size_t n) { d_num_threads = n; }
+    context& num_threads(size_t n) { d_num_threads = n; return *this; }
+    void set_num_threads(size_t n) { num_threads(n); }
     size_t num_threads() const { return d_num_threads; }
 
     void start_timer() {
@@ -401,9 +443,10 @@ public:
         d_duration = std::chrono::nanoseconds::zero();
     }
 
-    void set_bytes(int64_t bytes) { d_num_bytes = bytes; }
+    context& bytes(int64_t bytes) { d_num_bytes = bytes; return *this; }
+    void set_bytes(int64_t bytes) { set_bytes(bytes); }
 
-    size_t get_ns_per_op() {
+    size_t ns_per_op() {
         if (d_num_iterations <= 0) {
             return 0;
         }
@@ -414,7 +457,7 @@ public:
         d_num_iterations = n;
         reset_timer();
         start_timer();
-        d_benchmark.get_func()(this);
+        d_benchmark.func()(this);
         stop_timer();
     }
 
@@ -436,10 +479,10 @@ public:
         run_n(n);
         while (d_duration < d_benchtime && n < 1e9) {
             size_t last = n;
-            if (get_ns_per_op() == 0) {
+            if (ns_per_op() == 0) {
                 n = static_cast<size_t>(1e9);
             } else {
-                n = d_duration.count() / get_ns_per_op();
+                n = d_duration.count() / ns_per_op();
             }
             n = std::max(std::min(n+n/2, 100*last), last+1);
             n = round_up(n);
@@ -478,18 +521,12 @@ private:
 
 }; // namespace benchpress
 
-#ifdef BENCHPRESS_CONFIG_MAIN
+#if defined(BENCHPRESS_CONFIG_MAIN) || defined(BENCHPRESS_CONFIG_RUN_BENCHMARKS)
 
 #include <iostream>    // cout
 
-#define FMT_HEADER_ONLY
-#include "fmt/core.h"
-#include "fmt/format.h"
-#include "fmt/format-inl.h"
-#include "fmt/ostream.h"
-#include "fmt/chrono.h"
-
 namespace benchpress {
+
 /*
  * The run_benchmarks function will run the registered benchmarks.
  */
@@ -509,29 +546,29 @@ std::string run_benchmarks(const options& opts) {
     };
     std::vector<result> results;
 
-    for(std::string bench : opts.get_bench()){
+    for(std::string bench : opts.bench()){
         std::regex match_r(bench);
 
-        auto benchmarks = registration::get_ptr()->get_benchmarks();
+        auto benchmarks = registration::ptr()->benchmarks();
 
-        std::string prefix = (opts.get_plotdata())? "## " : "";
+        std::string prefix = (opts.plotdata())? "## " : "";
 
         for (auto& info : benchmarks) {
-            std::string name = info.get_name();
+            std::string name = info.name();
             if (std::regex_match(name, match_r)) {
                 context c (info, opts);
                 auto r = c.run();
 
                 //std::cout << prefix << std::setw(64) << std::left << name << rstr << '\n';
-                fmt::print(ret, "{}{:<64}{}", prefix, name, r.to_string());
+                fmt::print(ret, "{}{:<{}}{}\n", prefix, name, 4*opts.colwidth(), r.to_string());
 
-                r.set_name(name);
+                r.name(name);
 
                 std::string col = bench;
                 std_replace(col, ".*", "");
                 std_replace(col, "\\s+", "");
                 std_replace(col, " ", "");
-                r.set_col(col);
+                r.col(col);
 
                 std::string tag;
                 std::regex tag_regex (".*\\[\\s*(\\d+)\\s*\\].*");
@@ -542,44 +579,42 @@ std::string run_benchmarks(const options& opts) {
                     }
                 }
                 std::string row = tag;
-                r.set_row(row);
+                r.row(row);
 
                 results.push_back(r);
             }
         }
     }
 
-    if(opts.get_plotdata()) {
-        fmt::print(ret, "\n");
-        fmt::print(ret, "# plot data\n");
-
-        const int COL_WIDTH = 16;
+    if(opts.plotdata()) {
+        fmt::print(ret, "{}", "\n");
+        fmt::print(ret, "{}", "# plot data\n");
 
         std::set<std::string> headers;
         std::map<std::string, std::map<std::string, std::string>> results_map;
         for(auto& result : results) {
-            std::string name = result.get_name();
+            std::string name = result.name();
 
-            std::string col = result.get_col();
-            std::string row = result.get_row();
-            std::string result_str = std::to_string(result.get_ns_per_op());
+            std::string col = result.col();
+            std::string row = result.row();
+            std::string result_str = std::to_string(result.ns_per_op());
             result_str = (!result_str.empty())? result_str : "?"s;
             result_str = (!col.empty() && !row.empty())? result_str : "?"s;
 
 
             std::stringstream sort_col_ss;
             //sort_col_ss << std::setw(COL_WIDTH) << std::setfill(' ') << std::right << col;
-            fmt::print(sort_col_ss, "{:>{}}", COL_WIDTH, col);
+            fmt::print(sort_col_ss, "{:>{}}", col, opts.colwidth());
             std::string sort_col = sort_col_ss.str();
             
             std::stringstream sort_row_ss;
             //sort_row_ss << std::setw(COL_WIDTH) << std::setfill(' ') << std::right << row;
-            fmt::print(sort_row_ss, "{:>{}}", COL_WIDTH, row);
+            fmt::print(sort_row_ss, "{:>{}}", row, opts.colwidth());
             std::string sort_row = sort_row_ss.str();
 
             std::stringstream sort_result_ss;
             //sort_result_ss << std::setw(COL_WIDTH) << std::setfill(' ') << std::right << result_str;
-            fmt::print(sort_result_ss, "{:>{}}", COL_WIDTH, result_str);
+            fmt::print(sort_result_ss, "{:>{}}", result_str, opts.colwidth());
             std::string sort_result = sort_result_ss.str();
 
 
@@ -596,7 +631,7 @@ std::string run_benchmarks(const options& opts) {
 
         if(!results_map.empty()) {
             //ret << "# " << std::setw(COL_WIDTH) << std::right << std::setfill(' ') << ' ';
-            fmt::print(ret, "{:>{}} ", COL_WIDTH, " ");
+            fmt::print(ret, "{:>{}} ", " ", opts.colwidth());
             for(const auto& header : headers) {
                 //ret << header;
                 fmt::print(ret, header);
@@ -619,7 +654,7 @@ std::string run_benchmarks(const options& opts) {
                             fmt::print(ret, "{}", find_row_value->second);
                         } else {
                             //ret << std::setw(COL_WIDTH) << std::right << std::setfill(' ') << "?";
-                            fmt::print(ret, "{:>{}}", COL_WIDTH, "?");
+                            fmt::print(ret, "{:>{}}", "?", opts.colwidth());
                         }
                     }
 
@@ -646,6 +681,9 @@ std::string run_benchmarks(const options& opts) {
 #ifdef BENCHPRESS_CONFIG_MAIN
 #include "cxxopts.hpp"
 int main(int argc, char** argv) {
+    const int DEFAULT_COL_WIDTH = 16;
+    const int DEFAULT_BENCHTIME_S = 1;
+
     std::chrono::high_resolution_clock::time_point bp_start = std::chrono::high_resolution_clock::now();
     benchpress::options bench_opts;
     try {
@@ -654,11 +692,13 @@ int main(int argc, char** argv) {
             ("bench", "run benchmarks matching the regular expression", cxxopts::value<std::vector<std::string>>()
                 ->default_value( { ".*" } ))
             ("benchtime", "run enough iterations of each benchmark to take t seconds", cxxopts::value<size_t>()
-                ->default_value("1"))
+                ->default_value(std::to_string(DEFAULT_BENCHTIME_S)))
             ("cpu", "specify the number of threads to use for parallel benchmarks", cxxopts::value<size_t>()
                 ->default_value(std::to_string(std::thread::hardware_concurrency())))
             ("list", "list all available benchmarks")
             ("plotdata", "print plot data for gnuplot (use [tags] to tag the xlabel)")
+            ("colwidth", "print plot data colume width", cxxopts::value<int>()
+                ->default_value(std::to_string(DEFAULT_COL_WIDTH)))
             ("help", "print help")
         ;
         cmd_opts.parse(argc, argv);
@@ -679,29 +719,32 @@ int main(int argc, char** argv) {
         if (cmd_opts.count("plotdata")) {
             bench_opts.plotdata(true);
         }
+        if (cmd_opts.count("colwidth")) {
+            bench_opts.colwidth(cmd_opts["colwidth"].as<int>());
+        }
         if (cmd_opts.count("list")) {
-            auto benchmarks = benchpress::registration::get_ptr()->get_benchmarks();
-            for (auto& info : benchmarks) {
+            auto benchmarks = benchpress::registration::ptr()->benchmarks();
+            for (const auto& info : benchmarks) {
                 //std::cout << info.get_name() << '\n';
-                fmt::print("{}\n", info.get_name());
+                fmt::print("{}\n", info.name());
             }
             exit(EXIT_SUCCESS);
         }
     } catch (const cxxopts::OptionException& e) {
-        std::string prefix = (bench_opts.get_plotdata())? "## " : "";
+        std::string prefix = (bench_opts.plotdata())? "## " : "";
 
         //std::cout << prefix << "error parsing options: " << e.what() << '\n';
-        fmt::print("{}error parsing options; {}\n", prefix, e.what());
+        fmt::print("{}error parsing options: {}\n", prefix, e.what());
         exit(1);
     }
-    std::string prefix = (bench_opts.get_plotdata())? "## " : "";
+    std::string prefix = (bench_opts.plotdata())? "## " : "";
 
     std::string result = benchpress::run_benchmarks(bench_opts);
-    fmt::print("{}", result);
+    fmt::print("{}\n\n", result);
 
     auto duration = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - bp_start);
     //std::cout << prefix << argv[0] << " " << duration << "s" << '\n';
-    fmt::print("{}{} {}\n", prefix, argv[0], duration);
+    fmt::print("{}{} {:.2f}s\n", prefix, argv[0], duration.count());
     return 0;
 }
 #endif

@@ -9,13 +9,14 @@
 
 #include "utils.h"
 
-BENCHMARK("test", [](benchpress::context* ctx) {
+BENCHMARK("test bytes per second", [](benchpress::context* ctx) {
+    ctx->set_bytes(1234567890L);
     for (size_t i = 0; i < ctx->num_iterations(); ++i) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 })
 
-SCENARIO( "simple benchmark", "[benchmark]" ) {
+SCENARIO( "bytes per second benchmark", "[benchmark]" ) {
 
     GIVEN( "default benchmark options" ) {
         benchpress::options bench_opts;
@@ -30,7 +31,7 @@ SCENARIO( "simple benchmark", "[benchmark]" ) {
                 REQUIRE( !ouput.empty() );
                 REQUIRE( lines.size() >= 1 );
 
-                REQUIRE_THAT( lines[0], Matches( "test\\s+(\\d+)(\\s+[\\s\\d]+ns\\/op)(\\s+[\\s\\d]+ms\\/op)?(\\s+[\\s\\.\\d]+s\\/op)?" ) );
+                REQUIRE_THAT( lines[0], Matches( "test bytes per second\\s+(\\d+)(\\s+[\\s\\d]+ns\\/op)(\\s+[\\s\\d]+ms\\/op)?(\\s+[\\s\\.\\d]+s\\/op)?" ) );
             }
 
         }
