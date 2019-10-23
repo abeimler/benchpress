@@ -27,7 +27,6 @@
 #include <chrono>      // high_resolution_timer, duration
 #include <functional>  // function
 #include <iomanip>     // setw
-#include <iostream>    // cout
 #include <regex>       // regex, regex_match
 #include <sstream>     // stringstream
 #include <string>      // string
@@ -37,6 +36,7 @@
 #include <map>         
 #include <unordered_map>
 #include <set>
+#include <sstream>
 
 namespace benchpress {
 
@@ -476,13 +476,27 @@ private:
     }
 };
 
+}; // namespace benchpress
+
 #ifdef BENCHPRESS_CONFIG_MAIN
 
+#include <iostream>    // cout
+
+#define FMT_HEADER_ONLY
+#include "fmt/core.h"
+#include "fmt/format.h"
+#include "fmt/format-inl.h"
+#include "fmt/ostream.h"
+#include "fmt/chrono.h"
+
+namespace benchpress {
 /*
  * The run_benchmarks function will run the registered benchmarks.
  */
-void run_benchmarks(const options& opts) {
+std::string run_benchmarks(const options& opts) {
     using namespace std::string_literals;
+
+    std::stringstream ret;
 
     auto std_replace = [](std::string& str,
                 const std::string& oldStr,
@@ -507,8 +521,9 @@ void run_benchmarks(const options& opts) {
             if (std::regex_match(name, match_r)) {
                 context c (info, opts);
                 auto r = c.run();
-                std::string rstr = r.to_string();
-                std::cout << prefix << std::setw(64) << std::left << name << rstr << '\n';
+
+                //std::cout << prefix << std::setw(64) << std::left << name << rstr << '\n';
+                fmt::print(ret, "{}{:<64}{}", prefix, name, r.to_string());
 
                 r.set_name(name);
 
@@ -535,8 +550,8 @@ void run_benchmarks(const options& opts) {
     }
 
     if(opts.get_plotdata()) {
-        std::cout << '\n';
-        std::cout << "# plot data" << '\n';
+        fmt::print(ret, "\n");
+        fmt::print(ret, "# plot data\n");
 
         const int COL_WIDTH = 16;
 
@@ -553,15 +568,18 @@ void run_benchmarks(const options& opts) {
 
 
             std::stringstream sort_col_ss;
-            sort_col_ss << std::setw(COL_WIDTH) << std::setfill(' ') << std::right << col;
+            //sort_col_ss << std::setw(COL_WIDTH) << std::setfill(' ') << std::right << col;
+            fmt::print(sort_col_ss, "{:>{}}", COL_WIDTH, col);
             std::string sort_col = sort_col_ss.str();
             
             std::stringstream sort_row_ss;
-            sort_row_ss << std::setw(COL_WIDTH) << std::setfill(' ') << std::right << row;
+            //sort_row_ss << std::setw(COL_WIDTH) << std::setfill(' ') << std::right << row;
+            fmt::print(sort_row_ss, "{:>{}}", COL_WIDTH, row);
             std::string sort_row = sort_row_ss.str();
 
             std::stringstream sort_result_ss;
-            sort_result_ss << std::setw(COL_WIDTH) << std::setfill(' ') << std::right << result_str;
+            //sort_result_ss << std::setw(COL_WIDTH) << std::setfill(' ') << std::right << result_str;
+            fmt::print(sort_result_ss, "{:>{}}", COL_WIDTH, result_str);
             std::string sort_result = sort_result_ss.str();
 
 
@@ -577,38 +595,49 @@ void run_benchmarks(const options& opts) {
         //}
 
         if(!results_map.empty()) {
-            std::cout << "# " << std::setw(COL_WIDTH) << std::right << std::setfill(' ') << ' ';
+            //ret << "# " << std::setw(COL_WIDTH) << std::right << std::setfill(' ') << ' ';
+            fmt::print(ret, "{:>{}} ", COL_WIDTH, " ");
             for(const auto& header : headers) {
-                std::cout << header;
+                //ret << header;
+                fmt::print(ret, header);
             }
-            std::cout << '\n';
+            //ret << '\n';
+            fmt::print(ret, "{}", "\n");
 
             for(const auto& row_result : results_map) {
                 const auto& row_left_header = row_result.first;
                 const auto& row = row_result.second;
 
                 if(!row_left_header.empty()) {
-                    std::cout << "  " << row_left_header;
+                    //ret << "  " << row_left_header;
+                    fmt::print(ret, " {}", row_left_header);
 
                     for(const auto& header : headers) {
                         const auto find_row_value = row.find(header);
                         if(find_row_value != std::end(row)) {
-                            std::cout << find_row_value->second;
+                            //ret << find_row_value->second;
+                            fmt::print(ret, "{}", find_row_value->second);
                         } else {
-                            std::cout << std::setw(COL_WIDTH) << std::right << std::setfill(' ') << "?";
+                            //ret << std::setw(COL_WIDTH) << std::right << std::setfill(' ') << "?";
+                            fmt::print(ret, "{:>{}}", COL_WIDTH, "?");
                         }
                     }
 
-                    std::cout << '\n';
+                    //ret << '\n';
+                    fmt::print(ret, "{}", "\n");
                 }
             }
         }
-        std::cout << '\n';
+        //ret << '\n';
+        fmt::print(ret, "{}", "\n");
     }
+
+    return ret.str();
 }
+
+}; // namespace benchpress
 #endif
 
-} // namespace benchpress
 
 /*
  * If BENCHPRESS_CONFIG_MAIN is defined when the file is included then a main function will be emitted which provides a
@@ -634,7 +663,8 @@ int main(int argc, char** argv) {
         ;
         cmd_opts.parse(argc, argv);
         if (cmd_opts.count("help")) {
-            std::cout << cmd_opts.help({""}) << '\n';
+            //std::cout << cmd_opts.help({""}) << '\n';
+            fmt::print("{}\n", cmd_opts.help({""}));
             exit(0);
         }
         if (cmd_opts.count("bench")) {
@@ -652,23 +682,26 @@ int main(int argc, char** argv) {
         if (cmd_opts.count("list")) {
             auto benchmarks = benchpress::registration::get_ptr()->get_benchmarks();
             for (auto& info : benchmarks) {
-                std::cout << info.get_name() << '\n';
+                //std::cout << info.get_name() << '\n';
+                fmt::print("{}\n", info.get_name());
             }
             exit(EXIT_SUCCESS);
         }
     } catch (const cxxopts::OptionException& e) {
         std::string prefix = (bench_opts.get_plotdata())? "## " : "";
 
-        std::cout << prefix << "error parsing options: " << e.what() << '\n';
+        //std::cout << prefix << "error parsing options: " << e.what() << '\n';
+        fmt::print("{}error parsing options; {}\n", prefix, e.what());
         exit(1);
     }
     std::string prefix = (bench_opts.get_plotdata())? "## " : "";
 
-    benchpress::run_benchmarks(bench_opts);
-    float duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::high_resolution_clock::now() - bp_start
-    ).count() / 1000.f;
-    std::cout << prefix << argv[0] << " " << duration << "s" << '\n';
+    std::string result = benchpress::run_benchmarks(bench_opts);
+    fmt::print("{}", result);
+
+    auto duration = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - bp_start);
+    //std::cout << prefix << argv[0] << " " << duration << "s" << '\n';
+    fmt::print("{}{} {}\n", prefix, argv[0], duration);
     return 0;
 }
 #endif
