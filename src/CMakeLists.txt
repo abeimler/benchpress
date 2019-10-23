@@ -20,3 +20,4 @@
 
 ADD_SUBDIRECTORY (benchpress)
 ADD_SUBDIRECTORY (examples)
+ADD_SUBDIRECTORY (test)
