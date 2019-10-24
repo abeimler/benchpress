@@ -37,6 +37,7 @@
 #include <unordered_map>
 #include <set>
 #include <sstream>
+#include <tuple>
 
 #define FMT_HEADER_ONLY
 #include "fmt/core.h"
@@ -530,7 +531,7 @@ namespace benchpress {
 /*
  * The run_benchmarks function will run the registered benchmarks.
  */
-std::string run_benchmarks(const options& opts) {
+std::tuple<std::string, std::vector<result>> run_benchmarks_details(const options& opts) {
     using namespace std::string_literals;
 
     std::stringstream ret;
@@ -667,7 +668,12 @@ std::string run_benchmarks(const options& opts) {
         fmt::print(ret, "{}", "\n");
     }
 
-    return ret.str();
+    return { ret.str(), results };
+}
+
+std::string run_benchmarks(const options& opts) {
+    auto results = run_benchmarks_details(opts);
+    return std::get<0>(results);
 }
 
 }; // namespace benchpress

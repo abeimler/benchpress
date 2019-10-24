@@ -10,12 +10,14 @@
 #include "utils.h"
 
 BENCHMARK("test", [](benchpress::context* ctx) {
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    ctx->reset_timer();
     for (size_t i = 0; i < ctx->num_iterations(); ++i) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 })
 
-SCENARIO( "simple benchmark", "[benchmark]" ) {
+SCENARIO( "simple benchmark with reset_timer", "[benchmark]" ) {
 
     GIVEN( "default benchmark options" ) {
         benchpress::options bench_opts;

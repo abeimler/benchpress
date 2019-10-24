@@ -22,16 +22,17 @@ SCENARIO( "bytes per second benchmark", "[benchmark]" ) {
         benchpress::options bench_opts;
 
         WHEN( "run benchmark" ) {
-            std::string ouput = benchpress::run_benchmarks(bench_opts);
-            auto lines = split_string(ouput);
+            std::string output = benchpress::run_benchmarks(bench_opts);
+            auto lines = split_string(output);
 
-            THEN( "ouput not empty" ) {
+            THEN( "output not empty" ) {
                 using Catch::Matchers::Matches;
 
-                REQUIRE( !ouput.empty() );
+                REQUIRE( !output.empty() );
                 REQUIRE( lines.size() >= 1 );
 
                 REQUIRE_THAT( lines[0], Matches( "test bytes per second\\s+(\\d+)(\\s+[\\s\\d]+ns\\/op)(\\s+[\\s\\d]+ms\\/op)?(\\s+[\\s\\.\\d]+s\\/op)?(\\s+[\\s\\.\\d]+MB\\/s)" ) );
+                REQUIRE_THAT( lines[0], Matches( "test bytes per second\\s+(\\d+)(\\s+[\\s\\d]+ns\\/op)(\\s+[\\s\\d]+ms\\/op)?(\\s+[\\s\\.\\d]+s\\/op)?(\\s+1234.[\\d]+\\s+MB\\/s)" ) );
             }
 
         }

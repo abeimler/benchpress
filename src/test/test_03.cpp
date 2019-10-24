@@ -24,16 +24,17 @@ SCENARIO( "multi-threaded benchmark", "[benchmark]" ) {
         benchpress::options bench_opts;
 
         WHEN( "run benchmark" ) {
-            std::string ouput = benchpress::run_benchmarks(bench_opts);
-            auto lines = split_string(ouput);
+            std::string output = benchpress::run_benchmarks(bench_opts);
+            auto lines = split_string(output);
 
-            THEN( "ouput not empty" ) {
+            THEN( "output not empty" ) {
                 using Catch::Matchers::Matches;
 
-                REQUIRE( !ouput.empty() );
+                REQUIRE( !output.empty() );
                 REQUIRE( lines.size() >= 1 );
 
                 REQUIRE_THAT( lines[0], Matches( "multi-threaded test\\s+(\\d+)(\\s+[\\s\\d]+ns\\/op)(\\s+[\\s\\d]+ms\\/op)?(\\s+[\\s\\.\\d]+s\\/op)?" ) );
+                REQUIRE_THAT( lines[0], Matches( "multi-threaded test\\s+(\\d+)(\\s+[\\s\\d]+ns\\/op)(\\s+[\\s\\d]+ms\\/op)?(\\s+1.[\\d]+\\s+s\\/op)?" ) );
             }
 
         }
