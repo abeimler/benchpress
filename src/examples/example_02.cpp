@@ -1,5 +1,5 @@
 #define BENCHPRESS_CONFIG_MAIN
-#include "benchpress/benchpress.hpp"
+#include <benchpress/benchpress.hpp>
 
 unsigned int fib(unsigned int n) {
     return n < 2 ? n : fib(n-1) + fib(n-2);

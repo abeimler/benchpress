@@ -21,46 +21,52 @@
 #
 # Project Properties
 #
-CMAKE_MINIMUM_REQUIRED (VERSION 2.6.2)
-PROJECT (benchpress)
+CMAKE_MINIMUM_REQUIRED (VERSION 3.8)
+PROJECT (benchpress VERSION 1.1.0 LANGUAGES CXX)
 
 #
 # Debugging Options
 #
-SET (CMAKE_VERBOSE_MAKEFILE 0) # Use 1 for debugging, 0 for release
-
-#
-# Project Output Paths
-#
-SET (MAINFOLDER ${PROJECT_SOURCE_DIR})
+#SET (CMAKE_VERBOSE_MAKEFILE 0) # Use 1 for debugging, 0 for release
 
 #
 # Project Search Paths
 #
-LIST (APPEND CMAKE_PREFIX_PATH "${MAINFOLDER}")
-SET (CMAKE_MODULE_PATH "${MAINFOLDER}/cmake")
-INCLUDE_DIRECTORIES ("${MAINFOLDER}/src")
-
-#
-# Enable C++11
-#
-INCLUDE (EnableStdCXX11)
-ENABLE_STDCXX11 ()
-
-#
-# Do not omit frame pointers (this is required for perf to function correctly)
-#
-SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
+LIST (APPEND CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}")
+SET (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 #
 # libicu is required for command line argument parsing
 #
 FIND_PACKAGE(ICU REQUIRED)
-include_directories(${ICU_INCLUDE_DIRS})
-
-FIND_PACKAGE (Threads)
+FIND_PACKAGE(Threads)
 
 #
 # Recurse source sub-directories
 #
-ADD_SUBDIRECTORY (src)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+add_subdirectory(src)
+
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    set(CMAKE_CUDA_COMPILER_LAUNCHER "${CCACHE_PROGRAM}") # CMake 3.9+
+endif()
+
+if(CMAKE_VERSION VERSION_GREATER 3.6)
+    # Add clang-tidy if available
+    option(CLANG_TIDY_FIX "Perform fixes for Clang-Tidy" OFF)
+    find_program(
+        CLANG_TIDY_EXE
+        NAMES "clang-tidy"
+        DOC "Path to clang-tidy executable"
+    )
+
+    if(CLANG_TIDY_EXE)
+        if(CLANG_TIDY_FIX)
+            set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}" "-fix")
+        else()
+            set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+        endif()
+    endif()
+endif()

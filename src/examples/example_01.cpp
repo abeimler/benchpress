@@ -1,5 +1,5 @@
 #define BENCHPRESS_CONFIG_MAIN
-#include "benchpress/benchpress.hpp"
+#include <benchpress/benchpress.hpp>
 
 #include <chrono>
 #include <iostream>
