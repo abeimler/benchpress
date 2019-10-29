@@ -105,7 +105,7 @@ SCENARIO( "multible benchmarks with headers, plotdata, different order and missi
             auto results = benchpress::run_benchmarks_details(bench_opts);
 
             std::string output = std::get<0>(results);
-            auto result = std::get<1>(results);
+            auto result = std::get<1>(results).results;
 
             auto lines = split_string(output);
 

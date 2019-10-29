@@ -21,7 +21,7 @@ IF (NOT CMAKE_CROSSCOMPILING)
 		target_compile_features(${T_NAME} PUBLIC cxx_std_14)
 		set_target_properties(${T_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 
-		target_include_directories(${T_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/src")
+		target_include_directories(${T_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/include")
 		target_include_directories(${T_NAME} PRIVATE ${ICU_INCLUDE_DIRS})
 		target_link_libraries(${T_NAME} PRIVATE ${ICU_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 		target_compile_options(${T_NAME} PRIVATE "-fno-omit-frame-pointer")

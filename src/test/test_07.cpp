@@ -121,7 +121,7 @@ SCENARIO( "multible benchmarks with headers and plotdata", "[benchmark]" ) {
             auto results = benchpress::run_benchmarks_details(bench_opts);
 
             std::string output = std::get<0>(results);
-            auto result = std::get<1>(results);
+            auto result = std::get<1>(results).results;
 
             auto lines = split_string(output);
 
