@@ -156,13 +156,39 @@ SCENARIO( "multible benchmarks with headers, plotdata, different order and missi
                     
                 
                         THEN ( "results_map bar results are set" ) {
-                            auto result00 = results_map.find(fields_vector[1])->second.find(headers_vector[0])->second;
-                            //auto result10 = results_map.find(fields_vector[1])->second.find(headers_vector[0])->second;
-                            //auto result20 = results_map.find(fields_vector[2])->second.find(headers_vector[0])->second;
-                            //auto result30 = results_map.find(fields_vector[3])->second.find(headers_vector[0])->second;
-                            //auto result40 = results_map.find(fields_vector[4])->second.find(headers_vector[0])->second;
+                            auto result00 = results_map.find(fields_vector[0])->second.find(headers_vector[0])->second;
+                            auto result10 = results_map.find(fields_vector[1])->second.find(headers_vector[0])->second;
+                            auto result20 = results_map.find(fields_vector[2])->second.find(headers_vector[0])->second;
+                            auto result30 = results_map.find(fields_vector[3])->second.find(headers_vector[0])->second;
 
-                            REQUIRE_THAT( result00, Matches( fmt::format("\\s*{}\\s*", results[0].ns_per_op()) ) );
+                            REQUIRE_THAT( result00, Matches( fmt::format("\\s*{}\\s*", results[3].ns_per_op()) ) );
+                            REQUIRE_THAT( result10, Matches( fmt::format("\\s*{}\\s*", results[4].ns_per_op()) ) );
+                            REQUIRE_THAT( result20, Matches( fmt::format("\\s*{}\\s*", results[5].ns_per_op()) ) );
+                            REQUIRE_THAT( result30, Matches( fmt::format("\\s*{}\\s*", results[6].ns_per_op()) ) );
+                        }
+
+                        THEN ( "results_map foo results are set" ) {
+                            auto result01 = results_map.find(fields_vector[0])->second.find(headers_vector[1])->second;
+                            auto result11 = results_map.find(fields_vector[1])->second.find(headers_vector[1])->second;
+                            auto result21 = results_map.find(fields_vector[2])->second.find(headers_vector[1])->second;
+
+                            REQUIRE_THAT( result01, Matches( fmt::format("\\s*{}\\s*", results[0].ns_per_op()) ) );
+                            REQUIRE_THAT( result11, Matches( fmt::format("\\s*{}\\s*", results[1].ns_per_op()) ) );
+                            REQUIRE_THAT( result21, Matches( fmt::format("\\s*{}\\s*", results[2].ns_per_op()) ) );
+                        }
+
+                        THEN ( "results_map test results are set" ) {
+                            auto result02 = results_map.find(fields_vector[0])->second.find(headers_vector[2])->second;
+                            auto result12 = results_map.find(fields_vector[1])->second.find(headers_vector[2])->second;
+                            auto result21 = results_map.find(fields_vector[2])->second.find(headers_vector[2])->second;
+                            auto result31 = results_map.find(fields_vector[3])->second.find(headers_vector[2])->second;
+                            auto result41 = results_map.find(fields_vector[4])->second.find(headers_vector[2])->second;
+
+                            REQUIRE_THAT( result02, Matches( fmt::format("\\s*{}\\s*", results[7].ns_per_op()) ) );
+                            REQUIRE_THAT( result12, Matches( fmt::format("\\s*{}\\s*", results[8].ns_per_op()) ) );
+                            REQUIRE_THAT( result21, Matches( fmt::format("\\s*{}\\s*", results[9].ns_per_op()) ) );
+                            REQUIRE_THAT( result31, Matches( fmt::format("\\s*{}\\s*", results[10].ns_per_op()) ) );
+                            REQUIRE_THAT( result41, Matches( fmt::format("\\s*{}\\s*", results[11].ns_per_op()) ) );
                         }
                     }
                 }
