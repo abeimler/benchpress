@@ -114,6 +114,7 @@ SCENARIO( "multible benchmarks with headers, plotdata, different order and missi
 
                 REQUIRE( !output.empty() );
                 REQUIRE( lines.size() >= 20 );
+                REQUIRE( result.size() == 12 );
 
                 INFO(output)
 

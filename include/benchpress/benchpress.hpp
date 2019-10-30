@@ -63,7 +63,7 @@ namespace benchpress {
  */
 class options {
     std::vector<std::string> d_bench;
-    size_t      d_benchtime;
+    std::chrono::seconds     d_benchtime;
     size_t      d_cpu;
     bool        d_plotdata;
     int         d_col_width;
@@ -81,7 +81,7 @@ public:
         d_bench = bench;
         return *this;
     }
-    options& benchtime(size_t benchtime) {
+    options& benchtime(std::chrono::seconds benchtime) {
         d_benchtime = benchtime;
         return *this;
     }
@@ -111,10 +111,10 @@ public:
     }
     std::vector<std::string> get_bench() const { return bench(); }
     
-    size_t benchtime() const {
+    std::chrono::seconds benchtime() const {
         return d_benchtime;
     }
-    size_t get_benchtime() const { return benchtime(); }
+    size_t get_benchtime() const { return benchtime().count(); }
 
     size_t cpu() const {
         return d_cpu;
@@ -330,7 +330,6 @@ public:
     }
     std::string row() const { return d_row; }
 
-
     size_t ns_per_op() const {
         if (d_num_iterations <= 0) {
             return 0;
@@ -350,6 +349,13 @@ public:
             return 0;
         }
         return std::chrono::duration_cast<fsec_t>(d_duration).count() / d_num_iterations;
+    }
+
+    std::chrono::nanoseconds time_per_op() const {
+        if (d_num_iterations <= 0) {
+            return std::chrono::nanoseconds::zero();
+        }
+        return d_duration / d_num_iterations;
     }
 
     double mb_per_s() const {
@@ -428,7 +434,7 @@ public:
         : d_timer_on(false)
         , d_start()
         , d_duration()
-        , d_benchtime(std::chrono::seconds(opts.benchtime()))
+        , d_benchtime(opts.benchtime())
         , d_num_iterations(1)
         , d_num_threads(opts.cpu())
         , d_num_bytes(0)
@@ -546,10 +552,16 @@ private:
 namespace benchpress {
 
 struct benpress_results {
+
+    struct results_map_value {
+        std::string value_str;
+        std::chrono::nanoseconds value;
+    };
+
     std::vector<result> results;
     std::set<std::string> headers;
     std::set<std::string> fields;
-    std::map<std::string, std::map<std::string, std::string>> results_map;
+    std::map<std::string, std::map<std::string, results_map_value>> results_map;
 };
 
 /*
@@ -578,6 +590,7 @@ std::tuple<std::string, benpress_results> run_benchmarks_details(const options& 
 
         std::string prefix = (opts.plotdata())? "## " : "";
 
+        size_t rowcounter = 1;
         for (auto& info : benchmarks) {
             std::string name = info.name();
             if (std::regex_match(name, match_r)) {
@@ -603,15 +616,16 @@ std::tuple<std::string, benpress_results> run_benchmarks_details(const options& 
                         tag = tag_match[1].str();
                     }
                 }
-                std::string row = tag;
+                std::string row = (!tag.empty())? tag : std::to_string(rowcounter);
                 r.row(row);
 
                 res.results.push_back(r);
+                rowcounter++;
             }
         }
     }
 
-    if(opts.plotdata() || (!opts.csvoutput().empty() && !opts.csvsuffix().empty())) {
+    if(opts.plotdata() || !opts.csvoutput().empty()) {
         if (opts.plotdata()) {
             fmt::print(ret, "{}", "\n");
             fmt::print(ret, "{}", "# plot data\n");
@@ -622,9 +636,12 @@ std::tuple<std::string, benpress_results> run_benchmarks_details(const options& 
 
             std::string col = result.col();
             std::string row = result.row();
-            std::string result_str = std::to_string(result.ns_per_op());
-            result_str = (!result_str.empty())? result_str : "?"s;
-            result_str = (!col.empty() && !row.empty())? result_str : "?"s;
+
+            std::chrono::nanoseconds value = result.time_per_op();
+            std::string result_str = std::to_string(value.count());
+
+            result_str = (result_str.empty())? "?"s : result_str;
+            result_str = (col.empty() && row.empty())? "?"s : result_str;
 
 
             std::stringstream sort_col_ss;
@@ -645,7 +662,7 @@ std::tuple<std::string, benpress_results> run_benchmarks_details(const options& 
 
             res.headers.insert(sort_col);
             res.fields.insert(sort_row);
-            res.results_map[sort_row][sort_col] = sort_result;
+            res.results_map[sort_row][sort_col] = { sort_result, result.time_per_op() };
         }
 
         //std::cout << "#### " << "[Debug] results_map result" << '\n';
@@ -677,7 +694,7 @@ std::tuple<std::string, benpress_results> run_benchmarks_details(const options& 
                         const auto find_row_value = row.find(header);
                         if(find_row_value != std::end(row)) {
                             //ret << find_row_value->second;
-                            fmt::print(ret, "{}", find_row_value->second);
+                            fmt::print(ret, "{:>{}}", find_row_value->second.value_str, opts.colwidth());
                         } else {
                             //ret << std::setw(COL_WIDTH) << std::right << std::setfill(' ') << "?";
                             fmt::print(ret, "{:>{}}", "?", opts.colwidth());
@@ -701,6 +718,72 @@ std::string run_benchmarks(const options& opts) {
     return std::get<0>(results);
 }
 
+std::string ltrim(std::string str, const std::string& chars = "\t\n\v\f\r ")
+{
+    str.erase(0, str.find_first_not_of(chars));
+    return str;
+}
+ 
+std::string rtrim(std::string str, const std::string& chars = "\t\n\v\f\r ")
+{
+    str.erase(str.find_last_not_of(chars) + 1);
+    return str;
+}
+ 
+std::string trim(std::string str, const std::string& chars = "\t\n\v\f\r ")
+{
+    return ltrim(rtrim(str, chars), chars);
+}
+
+
+struct benchpress_csv_result {
+    std::string filename;
+    std::map<std::string, std::string> results;
+    std::string content;
+};
+
+std::vector<benchpress_csv_result> make_csv(const options& opts, const benpress_results& bench_results) {
+    std::map<std::string, benchpress_csv_result> rettmp;
+
+    for (const auto& res : bench_results.results_map) {
+        const auto& row_field = res.first;
+        const auto& rows = res.second;
+
+        for (const auto& col : rows) {
+            const auto& col_header = col.first;
+            const auto& values = col.second;
+
+            std::string header = trim(col_header);
+            std::string rowname = row_field;
+
+            std::string header_filename = std::regex_replace(header, std::regex(opts.csvsuffix()), ""); 
+            std::string filename = fmt::format("{}{}{}", opts.csvoutput(), ((!opts.csvsuffix().empty())? header_filename + "-" + opts.csvsuffix() : header), ".csv");
+
+            rettmp[filename].filename = filename;
+            rettmp[filename].results[rowname] = fmt::format("{}", values.value.count());
+        }
+
+    }
+
+    std::vector<benchpress_csv_result> ret;
+    for (auto& r : rettmp) {
+        const auto& filename = r.first;
+        auto& results = r.second.results;
+        auto& content = r.second.content;
+
+        for (auto& row : results) {
+            const auto& rowname = row.first;
+            auto& value = row.second;
+
+            content = fmt::format("{}{};{}\n", content, trim(rowname), value);
+        }
+
+        ret.push_back(r.second);
+    }
+
+    return ret;
+}
+
 }; // namespace benchpress
 #endif
 
@@ -713,7 +796,7 @@ std::string run_benchmarks(const options& opts) {
 #include "cxxopts.hpp"
 int main(int argc, char** argv) {
     const int DEFAULT_COL_WIDTH = 16;
-    const int DEFAULT_BENCHTIME_S = 1;
+    const std::chrono::seconds DEFAULT_BENCHTIME = std::chrono::seconds(1);
 
     std::chrono::high_resolution_clock::time_point bp_start = std::chrono::high_resolution_clock::now();
     benchpress::options bench_opts;
@@ -723,44 +806,53 @@ int main(int argc, char** argv) {
             ("bench", "run benchmarks matching the regular expression", cxxopts::value<std::vector<std::string>>()
                 ->default_value( { ".*" } ))
             ("benchtime", "run enough iterations of each benchmark to take t seconds", cxxopts::value<size_t>()
-                ->default_value(std::to_string(DEFAULT_BENCHTIME_S)))
+                ->default_value(std::to_string(DEFAULT_BENCHTIME.count())))
             ("cpu", "specify the number of threads to use for parallel benchmarks", cxxopts::value<size_t>()
                 ->default_value(std::to_string(std::thread::hardware_concurrency())))
             ("list", "list all available benchmarks")
+            ("help", "print help")
+        ;
+        cmd_opts.add_options()
             ("plotdata", "print plot data for gnuplot (use [tags] to tag the xlabel)")
             ("colwidth", "print plot data colume width", cxxopts::value<int>()
                 ->default_value(std::to_string(DEFAULT_COL_WIDTH)))
+        ;
+        cmd_opts.add_options()
             ("csvoutput", "CSV output directory", cxxopts::value<std::string>()
-                ->default_value("./"))
+                ->default_value(""))
             ("csvsuffix", "suffix for CSV file", cxxopts::value<std::string>()
                 ->default_value(""))
-            ("help", "print help")
         ;
         cmd_opts.parse(argc, argv);
+
         if (cmd_opts.count("help")) {
             //std::cout << cmd_opts.help({""}) << '\n';
             fmt::print("{}\n", cmd_opts.help({""}));
             exit(0);
         }
+
         if (cmd_opts.count("bench")) {
             bench_opts.bench(cmd_opts["bench"].as<std::vector<std::string>>());
         }
         if (cmd_opts.count("benchtime")) {
-            bench_opts.benchtime(cmd_opts["benchtime"].as<size_t>());
+            bench_opts.benchtime(std::chrono::seconds(cmd_opts["benchtime"].as<size_t>()));
         }
         if (cmd_opts.count("cpu")) {
             bench_opts.cpu(cmd_opts["cpu"].as<size_t>());
         }
+
         if (cmd_opts.count("plotdata")) {
             bench_opts.plotdata(true);
         }
         if (cmd_opts.count("colwidth")) {
             bench_opts.colwidth(cmd_opts["colwidth"].as<int>());
         }
+
         if (cmd_opts.count("csvoutput") && cmd_opts.count("csvsuffix")) {
             bench_opts.csvoutput(cmd_opts["csvoutput"].as<std::string>());
             bench_opts.csvsuffix(cmd_opts["csvsuffix"].as<std::string>());
         }
+
         if (cmd_opts.count("list")) {
             auto benchmarks = benchpress::registration::ptr()->benchmarks();
             for (const auto& info : benchmarks) {

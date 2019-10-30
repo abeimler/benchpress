@@ -34,7 +34,7 @@ IF (NOT CMAKE_CROSSCOMPILING)
 
 		add_executable(${T_NAME} ${T_FILE})
 
-		target_compile_features(${T_NAME} PUBLIC cxx_std_14)
+		target_compile_features(${T_NAME} PUBLIC cxx_std_11)
 		set_target_properties(${T_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 
 		target_include_directories(${T_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/include")
