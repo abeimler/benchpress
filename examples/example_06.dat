@@ -1,0 +1,17 @@
+## [10]  test      10 updates                                               100    10186053 ns/op            10 ms/op          0.01 s/op
+## [100]  test     100 updates                                               10   100316372 ns/op           100 ms/op          0.10 s/op
+## [500]  test     500 updates                                                5   500390559 ns/op           500 ms/op          0.50 s/op
+## [1000] test    1000 updates                                                1  1000468029 ns/op          1000 ms/op          1.00 s/op
+## [2000] test    2000 updates                                                1  2000476587 ns/op          2000 ms/op          2.00 s/op
+
+# plot data
+                             test
+               10        10186053
+              100       100316372
+              500       500390559
+             1000      1000468029
+             2000      2000476587
+
+
+
+## ./build/src/examples/example_06 9.52s
