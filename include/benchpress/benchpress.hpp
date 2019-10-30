@@ -548,6 +548,7 @@ namespace benchpress {
 struct benpress_results {
     std::vector<result> results;
     std::set<std::string> headers;
+    std::set<std::string> fields;
     std::map<std::string, std::map<std::string, std::string>> results_map;
 };
 
@@ -610,9 +611,11 @@ std::tuple<std::string, benpress_results> run_benchmarks_details(const options& 
         }
     }
 
-    if(opts.plotdata()) {
-        fmt::print(ret, "{}", "\n");
-        fmt::print(ret, "{}", "# plot data\n");
+    if(opts.plotdata() || (!opts.csvoutput().empty() && !opts.csvsuffix().empty())) {
+        if (opts.plotdata()) {
+            fmt::print(ret, "{}", "\n");
+            fmt::print(ret, "{}", "# plot data\n");
+        }
 
         for(auto& result : res.results) {
             std::string name = result.name();
@@ -641,6 +644,7 @@ std::tuple<std::string, benpress_results> run_benchmarks_details(const options& 
 
 
             res.headers.insert(sort_col);
+            res.fields.insert(sort_row);
             res.results_map[sort_row][sort_col] = sort_result;
         }
 
@@ -651,12 +655,12 @@ std::tuple<std::string, benpress_results> run_benchmarks_details(const options& 
         //    }
         //}
 
-        if(!res.results_map.empty()) {
+        if(opts.plotdata() && !res.results_map.empty()) {
             //ret << "# " << std::setw(COL_WIDTH) << std::right << std::setfill(' ') << ' ';
             fmt::print(ret, "{:>{}} ", " ", opts.colwidth());
             for(const auto& header : res.headers) {
                 //ret << header;
-                fmt::print(ret, header);
+                fmt::print(ret, "{}", header);
             }
             //ret << '\n';
             fmt::print(ret, "{}", "\n");
@@ -727,7 +731,7 @@ int main(int argc, char** argv) {
             ("colwidth", "print plot data colume width", cxxopts::value<int>()
                 ->default_value(std::to_string(DEFAULT_COL_WIDTH)))
             ("csvoutput", "CSV output directory", cxxopts::value<std::string>()
-                ->default_value(""))
+                ->default_value("./"))
             ("csvsuffix", "suffix for CSV file", cxxopts::value<std::string>()
                 ->default_value(""))
             ("help", "print help")
