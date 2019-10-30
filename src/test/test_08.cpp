@@ -109,7 +109,7 @@ BENCHMARK("[2000] bar    2000 updates", [](benchpress::context* ctx) {
 
 
 
-SCENARIO( "multible benchmarks with headers, plotdata and different order", "[benchmark]" ) {
+SCENARIO( "multible benchmarks with headers, plotdata and different order", "[benchmark][plotdata]" ) {
 
     GIVEN( "default benchmark options with headers and plotdata" ) {
         benchpress::options bench_opts;

@@ -93,9 +93,9 @@ BENCHMARK("[1000] bar    1000 updates", [](benchpress::context* ctx) {
 
 
 
-SCENARIO( "multible benchmarks with headers, plotdata, different order and missing tags; print csv", "[benchmark]" ) {
+SCENARIO( "multible benchmarks with headers, different order and missing tags; print csv", "[benchmark][csv]" ) {
 
-    GIVEN( "default benchmark options with headers and plotdata" ) {
+    GIVEN( "default benchmark options with headers and different order" ) {
         benchpress::options bench_opts;
         bench_opts
             .bench( { ".*foo.*", ".*bar.*", ".*test.*" } )

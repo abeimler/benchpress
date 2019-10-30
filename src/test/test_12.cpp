@@ -10,86 +10,6 @@
 
 #include "utils.h"
 
-/*
-BENCHMARK("[10]  foo      10 updates", [](benchpress::context* ctx) {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-})
-
-BENCHMARK("[100]  foo     100 updates", [](benchpress::context* ctx) {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    }
-})
-
-BENCHMARK("[500]  foo     500 updates", [](benchpress::context* ctx) {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-})
-
-
-
-
-
-BENCHMARK("[10]  test      10 updates", [](benchpress::context* ctx) {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
-    }
-})
-
-BENCHMARK("[100]  test     100 updates", [](benchpress::context* ctx) {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(53));
-    }
-})
-
-BENCHMARK("[500]  test     500 updates", [](benchpress::context* ctx) {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(70));
-    }
-})
-
-BENCHMARK("[1000] test    1000 updates", [](benchpress::context* ctx) {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(96));
-    }
-})
-
-BENCHMARK("[2000] test    2000 updates", [](benchpress::context* ctx) {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(83));
-    }
-})
-
-
-
-BENCHMARK("[10]  bar      10 updates", [](benchpress::context* ctx) {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-})
-
-BENCHMARK("[100]  bar     100 updates", [](benchpress::context* ctx) {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    }
-})
-
-BENCHMARK("[500]  bar     500 updates", [](benchpress::context* ctx) {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(3));
-    }
-})
-
-BENCHMARK("[1000] bar    1000 updates", [](benchpress::context* ctx) {
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(4));
-    }
-})
-*/
-
 
 BENCHMARK("foo create 10M entities", [](benchpress::context* ctx) {
     for (size_t i = 0; i < ctx->num_iterations(); ++i) {
@@ -143,7 +63,7 @@ BENCHMARK("bar iterate over 10M entities 2", [](benchpress::context* ctx) {
 
 
 
-SCENARIO( "multible benchmarks with headers, plotdata, different order and no tags; print csv", "[benchmark]" ) {
+SCENARIO( "multible benchmarks with headers, plotdata, different order and no tags; print csv", "[benchmark][csv]" ) {
 
     GIVEN( "default benchmark options with headers and plotdata" ) {
         benchpress::options bench_opts;

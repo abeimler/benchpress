@@ -39,7 +39,7 @@ BENCHMARK("[2000] test    2000 updates", [](benchpress::context* ctx) {
     }
 })
 
-SCENARIO( "simple benchmark with plotdata", "[benchmark]" ) {
+SCENARIO( "simple benchmark with plotdata", "[benchmark][plotdata]" ) {
 
     GIVEN( "default benchmark options" ) {
         benchpress::options bench_opts;

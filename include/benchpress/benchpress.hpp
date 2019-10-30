@@ -548,6 +548,7 @@ private:
 #if defined(BENCHPRESS_CONFIG_MAIN) || defined(BENCHPRESS_CONFIG_RUN_BENCHMARKS)
 
 #include <iostream>    // cout
+#include <fstream>
 
 namespace benchpress {
 
@@ -756,8 +757,17 @@ std::vector<benchpress_csv_result> make_csv(const options& opts, const benpress_
             std::string header = trim(col_header);
             std::string rowname = row_field;
 
+            std::string outdir = opts.csvoutput();
+            if (outdir.empty()) {
+                outdir = "./";
+            }
+            outdir = std::regex_replace(outdir, std::regex("\\\\"), "/"); 
+            if (outdir[outdir.size()-1] != '/') {
+                outdir += "/";
+            }
+
             std::string header_filename = std::regex_replace(header, std::regex(opts.csvsuffix()), ""); 
-            std::string filename = fmt::format("{}{}{}", opts.csvoutput(), ((!opts.csvsuffix().empty())? header_filename + "-" + opts.csvsuffix() : header), ".csv");
+            std::string filename = fmt::format("{}{}{}", outdir, ((!opts.csvsuffix().empty())? header_filename + "-" + opts.csvsuffix() : header), ".csv");
 
             rettmp[filename].filename = filename;
             rettmp[filename].results[rowname] = fmt::format("{}", values.value.count());
@@ -873,6 +883,17 @@ int main(int argc, char** argv) {
     auto res = benchpress::run_benchmarks_details(bench_opts);
     std::string result = std::get<0>(res);
     fmt::print("{}\n\n", result);
+
+    if (!bench_opts.csvoutput().empty()) {
+        auto results = std::get<1>(res);
+        auto results_csv = make_csv(bench_opts, results);
+
+        for (const auto& result : results_csv) {
+            std::ofstream out (result.filename, std::ofstream::out);
+            out << result.content;
+            out.close();
+        }
+    }
 
     auto duration = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - bp_start);
     //std::cout << prefix << argv[0] << " " << duration << "s" << '\n';

@@ -109,7 +109,7 @@ BENCHMARK("[2000] ccc    2000 updates", [](benchpress::context* ctx) {
 
 
 
-SCENARIO( "multible benchmarks with headers and plotdata", "[benchmark]" ) {
+SCENARIO( "multible benchmarks with headers and plotdata", "[benchmark][plotdata]" ) {
 
     GIVEN( "default benchmark options with headers and plotdata" ) {
         benchpress::options bench_opts;
