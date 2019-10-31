@@ -1,0 +1,27 @@
+## [10]  test      10 updates                                               100    10104263 ns/op            10 ms/op          0.01 s/op
+## [100]  test     100 updates                                               10   100195920 ns/op           100 ms/op          0.10 s/op
+## [500]  test     500 updates                                                5   500091228 ns/op           500 ms/op          0.50 s/op
+## [1000] test    1000 updates                                                1  1000109597 ns/op          1000 ms/op          1.00 s/op
+## [2000] test    2000 updates                                                1  2000067370 ns/op          2000 ms/op          2.00 s/op
+## [10]  foo      10 updates                                                200     5090481 ns/op             5 ms/op
+## [100]  foo     100 updates                                               100    10089823 ns/op            10 ms/op          0.01 s/op
+## [500]  foo     500 updates                                               100    15132086 ns/op            15 ms/op          0.02 s/op
+## [1000] foo    1000 updates                                                50    20122460 ns/op            20 ms/op          0.02 s/op
+## [2000] foo    2000 updates                                                50    25086321 ns/op            25 ms/op          0.03 s/op
+## [10]  bar      10 updates                                                100    10102596 ns/op            10 ms/op          0.01 s/op
+## [100]  bar     100 updates                                                20    50076354 ns/op            50 ms/op          0.05 s/op
+## [500]  bar     500 updates                                                10   100092220 ns/op           100 ms/op          0.10 s/op
+## [1000] bar    1000 updates                                                 5   200073367 ns/op           200 ms/op          0.20 s/op
+## [2000] bar    2000 updates                                                 5   500094726 ns/op           500 ms/op          0.50 s/op
+
+# plot data
+                              bar             foo            test
+               10        10102596         5090481        10104263
+              100        50076354        10089823       100195920
+              500       100092220        15132086       500091228
+             1000       200073367        20122460      1000109597
+             2000       500094726        25086321      2000067370
+
+
+
+## ./build/src/examples/example_07 29.53s

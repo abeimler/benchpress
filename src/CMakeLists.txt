@@ -18,10 +18,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-add_subdirectory (benchpress)
-add_subdirectory (examples)
+# 
+# Locate project sources
+#
+FILE (GLOB_RECURSE ts_HDRS RELATIVE ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/include/*.hpp ${PROJECT_SOURCE_DIR}/include/*.h)
+
+#
+# Install target
+#
+FOREACH (H_FILE ${ts_HDRS})
+	SET (H_INSTALL_DIR "benchpress")
+	STRING (REGEX MATCH "(.*)[/\\]" DIR ${H_FILE})
+	INSTALL (FILES ${H_FILE} DESTINATION include/${H_INSTALL_DIR}/${DIR})
+ENDFOREACH (H_FILE ${ts_HDRS})
+
+if (BUILD_BENCHPRESS_EXAMPLES)
+    add_subdirectory (examples)
+endif()
 
 include(CTest)
-if (BUILD_TESTING)
+if (BUILD_BENCHPRESS_TESTS)
     add_subdirectory (test)
 endif()

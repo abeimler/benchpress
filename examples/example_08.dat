@@ -1,0 +1,24 @@
+## [10]  test      10 updates                                               100    10077641 ns/op            10 ms/op          0.01 s/op
+## [100]  test     100 updates                                               10   100086940 ns/op           100 ms/op          0.10 s/op
+## [500]  test     500 updates                                                5   500159278 ns/op           500 ms/op          0.50 s/op
+## [1000] test    1000 updates                                                1  1000069189 ns/op          1000 ms/op          1.00 s/op
+## [2000] test    2000 updates                                                1  2000104618 ns/op          2000 ms/op          2.00 s/op
+## [10]  foo      10 updates                                                200     5106194 ns/op             5 ms/op
+## [100]  foo     100 updates                                               100    10104605 ns/op            10 ms/op          0.01 s/op
+## [500]  foo     500 updates                                               100    15103184 ns/op            15 ms/op          0.02 s/op
+## [10]  bar      10 updates                                                100    10121000 ns/op            10 ms/op          0.01 s/op
+## [100]  bar     100 updates                                                20    50073902 ns/op            50 ms/op          0.05 s/op
+## [500]  bar     500 updates                                                10   100093243 ns/op           100 ms/op          0.10 s/op
+## [1000] bar    1000 updates                                                 5   200216101 ns/op           200 ms/op          0.20 s/op
+
+# plot data
+                              bar             foo            test
+               10        10121000         5106194        10077641
+              100        50073902        10104605       100086940
+              500       100093243        15103184       500159278
+             1000       200216101               ?      1000069189
+             2000               ?               ?      2000104618
+
+
+
+## ./build/src/examples/example_08 22.64s

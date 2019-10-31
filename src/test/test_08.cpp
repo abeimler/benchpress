@@ -109,7 +109,7 @@ BENCHMARK("[2000] bar    2000 updates", [](benchpress::context* ctx) {
 
 
 
-SCENARIO( "multible benchmarks with headers, plotdata and different order", "[benchmark]" ) {
+SCENARIO( "multible benchmarks with headers, plotdata and different order", "[benchmark][plotdata]" ) {
 
     GIVEN( "default benchmark options with headers and plotdata" ) {
         benchpress::options bench_opts;
@@ -121,7 +121,7 @@ SCENARIO( "multible benchmarks with headers, plotdata and different order", "[be
             auto results = benchpress::run_benchmarks_details(bench_opts);
 
             std::string output = std::get<0>(results);
-            auto result = std::get<1>(results);
+            auto result = std::get<1>(results).results;
 
             auto lines = split_string(output);
 

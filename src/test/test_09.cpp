@@ -93,7 +93,7 @@ BENCHMARK("[1000] bar    1000 updates", [](benchpress::context* ctx) {
 
 
 
-SCENARIO( "multible benchmarks with headers, plotdata, different order and missing tags", "[benchmark]" ) {
+SCENARIO( "multible benchmarks with headers, plotdata, different order and missing tags", "[benchmark][plotdata]" ) {
 
     GIVEN( "default benchmark options with headers and plotdata" ) {
         benchpress::options bench_opts;
@@ -105,7 +105,7 @@ SCENARIO( "multible benchmarks with headers, plotdata, different order and missi
             auto results = benchpress::run_benchmarks_details(bench_opts);
 
             std::string output = std::get<0>(results);
-            auto result = std::get<1>(results);
+            auto result = std::get<1>(results).results;
 
             auto lines = split_string(output);
 
@@ -114,6 +114,7 @@ SCENARIO( "multible benchmarks with headers, plotdata, different order and missi
 
                 REQUIRE( !output.empty() );
                 REQUIRE( lines.size() >= 20 );
+                REQUIRE( result.size() == 12 );
 
                 INFO(output)
 
