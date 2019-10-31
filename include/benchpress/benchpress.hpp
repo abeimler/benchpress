@@ -68,6 +68,7 @@ class options {
     bool        d_plotdata;
     int         d_col_width;
     std::string d_csvoutput;
+    std::string d_csvprefix;
     std::string d_csvsuffix;
     bool        d_csvsort;
 public:
@@ -101,6 +102,10 @@ public:
     }
     options& csvoutput(std::string csvoutput) {
         d_csvoutput = csvoutput;
+        return *this;
+    }
+    options& csvprefix(std::string csvprefix) {
+        d_csvprefix = csvprefix;
         return *this;
     }
     options& csvsuffix(std::string csvsuffix) {
@@ -139,6 +144,9 @@ public:
 
     std::string csvoutput() const {
         return d_csvoutput;
+    }
+    std::string csvprefix() const {
+        return d_csvprefix;
     }
     std::string csvsuffix() const {
         return d_csvsuffix;
@@ -757,7 +765,9 @@ std::vector<benchpress_csv_result> make_csv(const options& opts, const benpress_
     std::map<std::string, benchpress_csv_result> rettmp;
 
     const char DELIMITER = ';';
-    const char QUOTECHAR = '\"';
+    const std::string QUOTECHAR = "\"";
+    const std::string NA = QUOTECHAR + "N/A" + QUOTECHAR;
+    const std::string DEFAULT_CSVFILENAME = "output";
 
     for (const auto& res : bench_results.results_map) {
         const auto& row_field = res.first;
@@ -780,8 +790,8 @@ std::vector<benchpress_csv_result> make_csv(const options& opts, const benpress_
             }
 
             std::string header_filename = std::regex_replace(header, std::regex(opts.csvsuffix()), ""); 
-            std::string filename = fmt::format("{}{}{}", outdir, header_filename + "-" + opts.csvsuffix(), ".csv");
-            std::string filename_map = fmt::format("{}{}{}", outdir, "output", ".csv");
+            std::string filename = fmt::format("{}{}{}", outdir, opts.csvprefix() + header_filename + opts.csvsuffix(), ".csv");
+            std::string filename_map = fmt::format("{}{}{}", outdir, (!opts.csvprefix().empty())? opts.csvprefix() : DEFAULT_CSVFILENAME, ".csv");
 
             if (!opts.csvsuffix().empty()) {
                 rettmp[filename].filename = filename;
@@ -826,34 +836,41 @@ std::vector<benchpress_csv_result> make_csv(const options& opts, const benpress_
                 content.pop_back();
             }
         } else {
+            std::set<std::string> colnames;
             for (auto& row : r.second.results_map) {
                 const auto& rowname = row.first;
                 const auto& cols = row.second;
 
-                content = fmt::format("{}{}", content, DELIMITER);
                 for (auto& col : cols) {
                     const auto& colname = col.first;
-
-                    content = fmt::format("{}{}{}", content, QUOTECHAR + trim(colname) + QUOTECHAR, DELIMITER);
+                    colnames.insert(colname);
                 }
-                if (content.length() > 0 && content[content.length()-1] == DELIMITER) {
-                    content.pop_back();
-                }
-
-                content = fmt::format("{}\n", content);
-                break;
             }
+
+            content = fmt::format("{}{}", content, DELIMITER);
+            for (const auto& colname : colnames) {
+                content = fmt::format("{}{}{}", content, QUOTECHAR + trim(colname) + QUOTECHAR, DELIMITER);
+            }
+            if (content.length() > 0 && content[content.length()-1] == DELIMITER) {
+                content.pop_back();
+            }
+            content = fmt::format("{}\n", content);
 
             for (auto& row : r.second.results_map) {
                 const auto& rowname = row.first;
                 const auto& cols = row.second;
 
                 content = fmt::format("{}{}{}", content, QUOTECHAR + trim(rowname) + QUOTECHAR, DELIMITER);
-                for (auto& col : cols) {
-                    const auto& colname = col.first;
-                    const auto& value = col.second;
-
-                    content = fmt::format("{}{}{}", content, trim(value), DELIMITER);
+                for (const auto& colname : colnames) {
+                    auto col = std::find_if(std::begin(cols), std::end(cols), [colname](const std::pair<std::string, std::string>& c) {
+                        return c.first == colname;
+                    });
+                    if (col != std::end(cols)) {
+                        const auto& value = col->second;
+                        content = fmt::format("{}{}{}", content, trim(value), DELIMITER);
+                    } else {
+                        content = fmt::format("{}{}{}", content, NA, DELIMITER);
+                    }
                 }
                 if (content.length() > 0 && content[content.length()-1] == DELIMITER) {
                     content.pop_back();
@@ -910,6 +927,8 @@ int main(int argc, char** argv) {
                 ->default_value(""))
             ("csvsuffix", "suffix for CSV file", cxxopts::value<std::string>()
                 ->default_value(""))
+            ("csvprefix", "prefix for CSV file", cxxopts::value<std::string>()
+                ->default_value(""))
             ("csvsort", "sort CSV files by value")
         ;
         cmd_opts.parse(argc, argv);
@@ -935,8 +954,9 @@ int main(int argc, char** argv) {
             bench_opts.colwidth(cmd_opts["colwidth"].as<int>());
         }
 
-        if (cmd_opts.count("csvoutput") && cmd_opts.count("csvsuffix")) {
+        if (cmd_opts.count("csvoutput")) {
             bench_opts.csvoutput(cmd_opts["csvoutput"].as<std::string>());
+            bench_opts.csvprefix(cmd_opts["csvprefix"].as<std::string>());
             bench_opts.csvsuffix(cmd_opts["csvsuffix"].as<std::string>());
             bench_opts.csvsort(cmd_opts.count("csvsort"));
         }

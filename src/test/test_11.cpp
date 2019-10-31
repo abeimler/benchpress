@@ -131,9 +131,9 @@ SCENARIO( "multible benchmarks with headers, plotdata, different order and missi
             THEN ( "csv_results filenames are set" ) {
                 REQUIRE(csv_results.size() == 3);
 
-                REQUIRE ( csv_results[0].filename == "./bar-update.csv" );
-                REQUIRE ( csv_results[1].filename == "./foo-update.csv" );
-                REQUIRE ( csv_results[2].filename == "./test-update.csv" );
+                REQUIRE ( csv_results[0].filename == "./barupdate.csv" );
+                REQUIRE ( csv_results[1].filename == "./fooupdate.csv" );
+                REQUIRE ( csv_results[2].filename == "./testupdate.csv" );
             }
 
 
@@ -207,9 +207,9 @@ SCENARIO( "multible benchmarks with headers, plotdata, different order and missi
             THEN ( "csv_results filenames are set" ) {
                 REQUIRE(csv_results.size() == 3);
 
-                REQUIRE ( csv_results[0].filename == "./bar-update.csv" );
-                REQUIRE ( csv_results[1].filename == "./foo-update.csv" );
-                REQUIRE ( csv_results[2].filename == "./test-update.csv" );
+                REQUIRE ( csv_results[0].filename == "./barupdate.csv" );
+                REQUIRE ( csv_results[1].filename == "./fooupdate.csv" );
+                REQUIRE ( csv_results[2].filename == "./testupdate.csv" );
             }
         }
     }
@@ -255,10 +255,119 @@ SCENARIO( "multible benchmarks with headers, plotdata, different order and missi
             THEN ( "csv_results filenames are set" ) {
                 REQUIRE(csv_results.size() == 3);
 
-                REQUIRE ( csv_results[0].filename == "./bar-update.csv" );
-                REQUIRE ( csv_results[1].filename == "./foo-update.csv" );
-                REQUIRE ( csv_results[2].filename == "./test-update.csv" );
+                REQUIRE ( csv_results[0].filename == "./barupdate.csv" );
+                REQUIRE ( csv_results[1].filename == "./fooupdate.csv" );
+                REQUIRE ( csv_results[2].filename == "./testupdate.csv" );
             }
+        }
+    }
+
+}
+
+
+
+
+
+SCENARIO( "multible benchmarks with headers, plotdata, different order and tags; print csv without csvsuffix but with csvprefix", "[benchmark][csv]" ) {
+
+    GIVEN( "default benchmark options with headers and plotdata" ) {
+        benchpress::options bench_opts;
+        bench_opts
+            .bench( { ".*foo.*", ".*bar.*", ".*test.*" } )
+            .csvprefix("update")
+            .csvoutput("./");
+
+        WHEN( "run benchmark" ) {
+            using Catch::Matchers::Matches;
+
+            auto res = benchpress::run_benchmarks_details(bench_opts);
+            std::string output = std::get<0>(res);
+            auto results = std::get<1>(res).results;
+            auto headers = std::get<1>(res).headers;
+            auto fields = std::get<1>(res).fields;
+            auto results_map = std::get<1>(res).results_map;
+
+            std::vector<std::string> headers_vector (headers.size());
+            std::copy(std::begin(headers), std::end(headers), std::begin(headers_vector));
+
+            std::vector<std::string> fields_vector (fields.size());
+            std::copy(std::begin(fields), std::end(fields), std::begin(fields_vector));
+
+            REQUIRE( results.size() == 12 );
+
+            auto csv_results = benchpress::make_csv(bench_opts, std::get<1>(res));
+
+            REQUIRE( csv_results.size() == 1 );
+
+            auto csv_results00_content_lines = split_string(csv_results[0].content);
+
+            CAPTURE(output);
+            CAPTURE(csv_results[0].content);
+
+            THEN ( "csv_results filenames are set" ) {
+                REQUIRE(csv_results.size() == 1);
+
+                REQUIRE ( csv_results[0].filename == "./update.csv" );
+            }
+
+
+            THEN ( "csv_results is right" ) {
+                REQUIRE(csv_results00_content_lines.size() == 6);
+
+                REQUIRE_THAT( csv_results00_content_lines[0], Matches( fmt::format(";.{}.;.{}.;.{}.", "bar", "foo", "test") ) );
+                REQUIRE_THAT( csv_results00_content_lines[1], Matches( fmt::format(".{}.;{};{};{}",   "10", results[3].ns_per_op(),  results[0].ns_per_op(), results[7].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results00_content_lines[2], Matches( fmt::format(".{}.;{};{};{}",  "100", results[4].ns_per_op(),  results[1].ns_per_op(), results[8].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results00_content_lines[3], Matches( fmt::format(".{}.;{};{};{}",  "500", results[5].ns_per_op(),  results[2].ns_per_op(), results[9].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results00_content_lines[4], Matches( fmt::format(".{}.;{};{};{}", "1000", results[6].ns_per_op(),               "\"N/A\"", results[10].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results00_content_lines[5], Matches( fmt::format(".{}.;{};{};{}", "2000",              "\"N/A\"",               "\"N/A\"", results[11].ns_per_op()) ) );
+            }
+
+        }
+    }
+
+}
+
+SCENARIO( "multible benchmarks with headers, plotdata, different order and tags; print csv without csvsuffix and without csvprefix", "[benchmark][csv]" ) {
+
+    GIVEN( "default benchmark options with headers and plotdata" ) {
+        benchpress::options bench_opts;
+        bench_opts
+            .bench( { ".*foo.*", ".*bar.*", ".*test.*" } )
+            .csvoutput("./");
+
+        WHEN( "run benchmark" ) {
+            using Catch::Matchers::Matches;
+
+            auto res = benchpress::run_benchmarks_details(bench_opts);
+            std::string output = std::get<0>(res);
+            auto results = std::get<1>(res).results;
+            auto headers = std::get<1>(res).headers;
+            auto fields = std::get<1>(res).fields;
+            auto results_map = std::get<1>(res).results_map;
+
+            std::vector<std::string> headers_vector (headers.size());
+            std::copy(std::begin(headers), std::end(headers), std::begin(headers_vector));
+
+            std::vector<std::string> fields_vector (fields.size());
+            std::copy(std::begin(fields), std::end(fields), std::begin(fields_vector));
+
+            REQUIRE( results.size() == 12 );
+
+            auto csv_results = benchpress::make_csv(bench_opts, std::get<1>(res));
+
+            REQUIRE( csv_results.size() == 1 );
+
+            auto csv_results00_content_lines = split_string(csv_results[0].content);
+
+            CAPTURE(output);
+            CAPTURE(csv_results[0].content);
+
+            THEN ( "csv_results filenames are set" ) {
+                REQUIRE(csv_results.size() == 1);
+
+                REQUIRE ( csv_results[0].filename == "./output.csv" );
+            }
+
         }
     }
 

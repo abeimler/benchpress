@@ -103,8 +103,8 @@ SCENARIO( "multible benchmarks with headers, plotdata, different order and no ta
             THEN ( "csv_results filenames are set" ) {
                 REQUIRE(csv_results.size() == 2);
 
-                REQUIRE ( csv_results[0].filename == "./bar-10Mentities.csv" );
-                REQUIRE ( csv_results[1].filename == "./foo-10Mentities.csv" );
+                REQUIRE ( csv_results[0].filename == "./bar10Mentities.csv" );
+                REQUIRE ( csv_results[1].filename == "./foo10Mentities.csv" );
             }
 
 
@@ -174,8 +174,8 @@ SCENARIO( "multible benchmarks with headers, plotdata, different order and no ta
             THEN ( "csv_results filenames are set" ) {
                 REQUIRE(csv_results.size() == 2);
 
-                REQUIRE ( csv_results[0].filename == "./bar-10Mentities.csv" );
-                REQUIRE ( csv_results[1].filename == "./foo-10Mentities.csv" );
+                REQUIRE ( csv_results[0].filename == "./bar10Mentities.csv" );
+                REQUIRE ( csv_results[1].filename == "./foo10Mentities.csv" );
             }
 
 
