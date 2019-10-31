@@ -140,28 +140,28 @@ SCENARIO( "multible benchmarks with headers, plotdata, different order and missi
             THEN ( "csv_results bar csv content is right" ) {
                 REQUIRE(csv_results00_content_lines.size() == 4);
 
-                REQUIRE_THAT( csv_results00_content_lines[0], Matches( fmt::format("{};{}", "10", results[3].ns_per_op()) ) );
-                REQUIRE_THAT( csv_results00_content_lines[1], Matches( fmt::format("{};{}", "100", results[4].ns_per_op()) ) );
-                REQUIRE_THAT( csv_results00_content_lines[2], Matches( fmt::format("{};{}", "500", results[5].ns_per_op()) ) );
-                REQUIRE_THAT( csv_results00_content_lines[3], Matches( fmt::format("{};{}", "1000", results[6].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results00_content_lines[0], Matches( fmt::format(".{}.;{}", "10", results[3].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results00_content_lines[1], Matches( fmt::format(".{}.;{}", "100", results[4].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results00_content_lines[2], Matches( fmt::format(".{}.;{}", "500", results[5].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results00_content_lines[3], Matches( fmt::format(".{}.;{}", "1000", results[6].ns_per_op()) ) );
             }
 
             THEN ( "csv_results foo csv content is right" ) {
                 REQUIRE(csv_results01_content_lines.size() == 3);
 
-                REQUIRE_THAT( csv_results01_content_lines[0], Matches( fmt::format("{};{}", "10", results[0].ns_per_op()) ) );
-                REQUIRE_THAT( csv_results01_content_lines[1], Matches( fmt::format("{};{}", "100", results[1].ns_per_op()) ) );
-                REQUIRE_THAT( csv_results01_content_lines[2], Matches( fmt::format("{};{}", "500", results[2].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results01_content_lines[0], Matches( fmt::format(".{}.;{}", "10", results[0].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results01_content_lines[1], Matches( fmt::format(".{}.;{}", "100", results[1].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results01_content_lines[2], Matches( fmt::format(".{}.;{}", "500", results[2].ns_per_op()) ) );
             }
 
             THEN ( "csv_results test csv content is right" ) {
                 REQUIRE(csv_results02_content_lines.size() == 5);
 
-                REQUIRE_THAT( csv_results02_content_lines[0], Matches( fmt::format("{};{}", "10", results[7].ns_per_op()) ) );
-                REQUIRE_THAT( csv_results02_content_lines[1], Matches( fmt::format("{};{}", "100", results[8].ns_per_op()) ) );
-                REQUIRE_THAT( csv_results02_content_lines[2], Matches( fmt::format("{};{}", "500", results[9].ns_per_op()) ) );
-                REQUIRE_THAT( csv_results02_content_lines[3], Matches( fmt::format("{};{}", "1000", results[10].ns_per_op()) ) );
-                REQUIRE_THAT( csv_results02_content_lines[4], Matches( fmt::format("{};{}", "2000", results[11].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results02_content_lines[0], Matches( fmt::format(".{}.;{}", "10", results[7].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results02_content_lines[1], Matches( fmt::format(".{}.;{}", "100", results[8].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results02_content_lines[2], Matches( fmt::format(".{}.;{}", "500", results[9].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results02_content_lines[3], Matches( fmt::format(".{}.;{}", "1000", results[10].ns_per_op()) ) );
+                REQUIRE_THAT( csv_results02_content_lines[4], Matches( fmt::format(".{}.;{}", "2000", results[11].ns_per_op()) ) );
             }
         }
     }

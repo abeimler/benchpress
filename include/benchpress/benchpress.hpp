@@ -69,6 +69,7 @@ class options {
     int         d_col_width;
     std::string d_csvoutput;
     std::string d_csvsuffix;
+    bool        d_csvsort;
 public:
     options()
         : d_bench( { ".*" } )
@@ -76,6 +77,7 @@ public:
         , d_cpu(std::thread::hardware_concurrency())
         , d_plotdata(false)
         , d_col_width(16)
+        , d_csvsort(false)
     {}
     options& bench(const std::vector<std::string>& bench) {
         d_bench = bench;
@@ -103,6 +105,10 @@ public:
     }
     options& csvsuffix(std::string csvsuffix) {
         d_csvsuffix = csvsuffix;
+        return *this;
+    }
+    options& csvsort(bool csvsort) {
+        d_csvsort = csvsort;
         return *this;
     }
 
@@ -136,6 +142,9 @@ public:
     }
     std::string csvsuffix() const {
         return d_csvsuffix;
+    }
+    bool csvsort() const {
+        return d_csvsort;
     }
 };
 
@@ -740,15 +749,19 @@ std::string trim(std::string str, const std::string& chars = "\t\n\v\f\r ")
 struct benchpress_csv_result {
     std::string filename;
     std::map<std::string, std::string> results;
+    std::map<std::string, std::map<std::string, std::string>> results_map;
     std::string content;
 };
 
 std::vector<benchpress_csv_result> make_csv(const options& opts, const benpress_results& bench_results) {
     std::map<std::string, benchpress_csv_result> rettmp;
 
+    const char DELIMITER = ';';
+    const char QUOTECHAR = '\"';
+
     for (const auto& res : bench_results.results_map) {
         const auto& row_field = res.first;
-        const auto& rows = res.second;
+        auto rows = res.second;
 
         for (const auto& col : rows) {
             const auto& col_header = col.first;
@@ -762,15 +775,21 @@ std::vector<benchpress_csv_result> make_csv(const options& opts, const benpress_
                 outdir = "./";
             }
             outdir = std::regex_replace(outdir, std::regex("\\\\"), "/"); 
-            if (outdir[outdir.size()-1] != '/') {
+            if (outdir.length() > 0 && outdir[outdir.length()-1] != '/') {
                 outdir += "/";
             }
 
             std::string header_filename = std::regex_replace(header, std::regex(opts.csvsuffix()), ""); 
-            std::string filename = fmt::format("{}{}{}", outdir, ((!opts.csvsuffix().empty())? header_filename + "-" + opts.csvsuffix() : header), ".csv");
+            std::string filename = fmt::format("{}{}{}", outdir, header_filename + "-" + opts.csvsuffix(), ".csv");
+            std::string filename_map = fmt::format("{}{}{}", outdir, "output", ".csv");
 
-            rettmp[filename].filename = filename;
-            rettmp[filename].results[rowname] = fmt::format("{}", values.value.count());
+            if (!opts.csvsuffix().empty()) {
+                rettmp[filename].filename = filename;
+                rettmp[filename].results[rowname] = fmt::format("{}", values.value_str);
+            } else {
+                rettmp[filename_map].filename = filename_map;
+                rettmp[filename_map].results_map[rowname][header] = fmt::format("{}", values.value.count());
+            }
         }
 
     }
@@ -778,14 +797,73 @@ std::vector<benchpress_csv_result> make_csv(const options& opts, const benpress_
     std::vector<benchpress_csv_result> ret;
     for (auto& r : rettmp) {
         const auto& filename = r.first;
-        auto& results = r.second.results;
         auto& content = r.second.content;
 
-        for (auto& row : results) {
-            const auto& rowname = row.first;
-            auto& value = row.second;
+        if (!opts.csvsuffix().empty()) {
+            std::vector<std::pair<std::string, std::string>> results;
+            std::transform(
+                std::begin(r.second.results),
+                std::end(r.second.results),
+                std::back_inserter(results),
+                [](const std::pair<std::string, std::string>& p) {
+                    return p;
+                }
+            );
 
-            content = fmt::format("{}{};{}\n", content, trim(rowname), value);
+            if (opts.csvsort()) {
+                std::sort(std::begin(results), std::end(results), [](const std::pair<std::string, std::string>& a, const std::pair<std::string, std::string>& b){
+                    return a.second.compare(b.second) < 0;
+                });
+            }
+
+            for (auto& row : results) {
+                const auto& rowname = row.first;
+                const auto& value = row.second;
+
+                content = fmt::format("{}{}{}{}\n", content, QUOTECHAR + trim(rowname) + QUOTECHAR, DELIMITER, trim(value));
+            }
+            if (content.length() > 0 && content[content.length()-1] == '\n') {
+                content.pop_back();
+            }
+        } else {
+            for (auto& row : r.second.results_map) {
+                const auto& rowname = row.first;
+                const auto& cols = row.second;
+
+                content = fmt::format("{}{}", content, DELIMITER);
+                for (auto& col : cols) {
+                    const auto& colname = col.first;
+
+                    content = fmt::format("{}{}{}", content, QUOTECHAR + trim(colname) + QUOTECHAR, DELIMITER);
+                }
+                if (content.length() > 0 && content[content.length()-1] == DELIMITER) {
+                    content.pop_back();
+                }
+
+                content = fmt::format("{}\n", content);
+                break;
+            }
+
+            for (auto& row : r.second.results_map) {
+                const auto& rowname = row.first;
+                const auto& cols = row.second;
+
+                content = fmt::format("{}{}{}", content, QUOTECHAR + trim(rowname) + QUOTECHAR, DELIMITER);
+                for (auto& col : cols) {
+                    const auto& colname = col.first;
+                    const auto& value = col.second;
+
+                    content = fmt::format("{}{}{}", content, trim(value), DELIMITER);
+                }
+                if (content.length() > 0 && content[content.length()-1] == DELIMITER) {
+                    content.pop_back();
+                }
+
+                content = fmt::format("{}\n", content);
+            }
+            if (content.length() > 0 && content[content.length()-1] == '\n') {
+                content.pop_back();
+            }
         }
 
         ret.push_back(r.second);
@@ -832,6 +910,7 @@ int main(int argc, char** argv) {
                 ->default_value(""))
             ("csvsuffix", "suffix for CSV file", cxxopts::value<std::string>()
                 ->default_value(""))
+            ("csvsort", "sort CSV files by value")
         ;
         cmd_opts.parse(argc, argv);
 
@@ -851,9 +930,7 @@ int main(int argc, char** argv) {
             bench_opts.cpu(cmd_opts["cpu"].as<size_t>());
         }
 
-        if (cmd_opts.count("plotdata")) {
-            bench_opts.plotdata(true);
-        }
+        bench_opts.plotdata(cmd_opts.count("plotdata"));
         if (cmd_opts.count("colwidth")) {
             bench_opts.colwidth(cmd_opts["colwidth"].as<int>());
         }
@@ -861,6 +938,7 @@ int main(int argc, char** argv) {
         if (cmd_opts.count("csvoutput") && cmd_opts.count("csvsuffix")) {
             bench_opts.csvoutput(cmd_opts["csvoutput"].as<std::string>());
             bench_opts.csvsuffix(cmd_opts["csvsuffix"].as<std::string>());
+            bench_opts.csvsort(cmd_opts.count("csvsort"));
         }
 
         if (cmd_opts.count("list")) {
