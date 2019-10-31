@@ -71,6 +71,7 @@ class options {
     std::string d_csvprefix;
     std::string d_csvsuffix;
     bool        d_csvsort;
+    std::string d_csvunit;
 public:
     options()
         : d_bench( { ".*" } )
@@ -116,6 +117,10 @@ public:
         d_csvsort = csvsort;
         return *this;
     }
+    options& csvunit(std::string csvunit) {
+        d_csvunit = csvunit;
+        return *this;
+    }
 
     std::vector<std::string> bench() const {
         return d_bench;
@@ -153,6 +158,9 @@ public:
     }
     bool csvsort() const {
         return d_csvsort;
+    }
+    std::string csvunit() const {
+        return d_csvunit;
     }
 };
 
@@ -793,12 +801,28 @@ std::vector<benchpress_csv_result> make_csv(const options& opts, const benpress_
             std::string filename = fmt::format("{}{}{}", outdir, opts.csvprefix() + header_filename + opts.csvsuffix(), ".csv");
             std::string filename_map = fmt::format("{}{}{}", outdir, (!opts.csvprefix().empty())? opts.csvprefix() : DEFAULT_CSVFILENAME, ".csv");
 
+            std::string value_str = fmt::format("{}", values.value_str);
+            if (opts.csvunit() == "seconds") {
+                value_str = fmt::format("{:.3f}s", std::chrono::duration_cast<std::chrono::duration<double>>(values.value).count() );
+            } else if (opts.csvunit() == "milliseconds") {
+                value_str = fmt::format("{}ms", std::chrono::duration_cast<std::chrono::milliseconds>(values.value).count() );
+            } else if (opts.csvunit() == "microseconds") {
+                value_str = fmt::format("{}us", std::chrono::duration_cast<std::chrono::microseconds>(values.value).count() );
+            } else if (opts.csvunit() == "nanoseconds") {
+                value_str = fmt::format("{}ns", std::chrono::duration_cast<std::chrono::nanoseconds>(values.value).count() );
+            } else if (opts.csvunit() == "minutes") {
+                value_str = fmt::format("{}min", std::chrono::duration_cast<std::chrono::minutes>(values.value).count() );
+            } else if (opts.csvunit() == "hours") {
+                value_str = fmt::format("{}h", std::chrono::duration_cast<std::chrono::hours>(values.value).count() );
+            }
+
+
             if (!opts.csvsuffix().empty()) {
                 rettmp[filename].filename = filename;
-                rettmp[filename].results[rowname] = fmt::format("{}", values.value_str);
+                rettmp[filename].results[rowname] = value_str;
             } else {
                 rettmp[filename_map].filename = filename_map;
-                rettmp[filename_map].results_map[rowname][header] = fmt::format("{}", values.value.count());
+                rettmp[filename_map].results_map[rowname][header] = value_str;
             }
         }
 
@@ -930,6 +954,8 @@ int main(int argc, char** argv) {
             ("csvprefix", "prefix for CSV file", cxxopts::value<std::string>()
                 ->default_value(""))
             ("csvsort", "sort CSV files by value")
+            ("csvunit", "(time) unit of the CSV file values", cxxopts::value<std::string>()
+                ->default_value(""))
         ;
         cmd_opts.parse(argc, argv);
 
@@ -958,6 +984,7 @@ int main(int argc, char** argv) {
             bench_opts.csvoutput(cmd_opts["csvoutput"].as<std::string>());
             bench_opts.csvprefix(cmd_opts["csvprefix"].as<std::string>());
             bench_opts.csvsuffix(cmd_opts["csvsuffix"].as<std::string>());
+            bench_opts.csvunit(cmd_opts["csvunit"].as<std::string>());
             bench_opts.csvsort(cmd_opts.count("csvsort"));
         }
 
