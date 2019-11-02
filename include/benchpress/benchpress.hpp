@@ -652,11 +652,6 @@ std::tuple<std::string, benpress_results> run_benchmarks_details(const options& 
     }
 
     if(opts.plotdata() || !opts.csvoutput().empty()) {
-        if (opts.plotdata()) {
-            fmt::print(ret, "{}", "\n");
-            fmt::print(ret, "{}", "# plot data\n");
-        }
-
         for(auto& result : res.results) {
             std::string name = result.name();
 
@@ -685,10 +680,22 @@ std::tuple<std::string, benpress_results> run_benchmarks_details(const options& 
             fmt::print(sort_result_ss, "{:>{}}", result_str, opts.colwidth());
             std::string sort_result = sort_result_ss.str();
 
-
-            res.headers.insert(sort_col);
-            res.fields.insert(sort_row);
             res.results_map[sort_row][sort_col] = { sort_result, result.time_per_op() };
+        }
+
+
+        res.headers.clear();
+        res.fields.clear();
+        for (auto& row : res.results_map) {
+            const auto& rowname = row.first;
+            const auto& cols = row.second;
+
+            res.fields.insert(rowname);
+
+            for (auto& col : cols) {
+                const auto& colname = col.first;
+                res.headers.insert(colname);
+            }
         }
 
         //std::cout << "#### " << "[Debug] results_map result" << '\n';
@@ -699,6 +706,11 @@ std::tuple<std::string, benpress_results> run_benchmarks_details(const options& 
         //}
 
         if(opts.plotdata() && !res.results_map.empty()) {
+            if (opts.plotdata()) {
+                fmt::print(ret, "{}", "\n");
+                fmt::print(ret, "{}", "# plot data\n");
+            }
+
             //ret << "# " << std::setw(COL_WIDTH) << std::right << std::setfill(' ') << ' ';
             fmt::print(ret, "{:>{}} ", " ", opts.colwidth());
             for(const auto& header : res.headers) {
@@ -822,7 +834,7 @@ std::vector<benchpress_csv_result> make_csv(const options& opts, const benpress_
                 rettmp[filename].results[rowname] = value_str;
             } else {
                 rettmp[filename_map].filename = filename_map;
-                rettmp[filename_map].results_map[rowname][header] = value_str;
+                rettmp[filename_map].results_map[rowname][col_header] = value_str;
             }
         }
 
