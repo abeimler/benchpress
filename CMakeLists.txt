@@ -22,7 +22,7 @@
 # Project Properties
 #
 CMAKE_MINIMUM_REQUIRED (VERSION 3.8)
-PROJECT (benchpress VERSION 1.2.1 LANGUAGES CXX)
+PROJECT (benchpress VERSION 1.2.2 LANGUAGES CXX)
 
 #
 # Debugging Options
