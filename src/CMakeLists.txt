@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 # 
 # Locate project sources
 #
@@ -40,3 +42,5 @@ include(CTest)
 if (BUILD_BENCHPRESS_TESTS)
     add_subdirectory (test)
 endif()
+
+# thx to https://cliutils.gitlab.io/modern-cmake/

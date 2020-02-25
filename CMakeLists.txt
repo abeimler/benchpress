@@ -22,7 +22,7 @@
 # Project Properties
 #
 CMAKE_MINIMUM_REQUIRED (VERSION 3.8)
-PROJECT (benchpress VERSION 1.2.2 LANGUAGES CXX)
+PROJECT (benchpress VERSION 1.2.3 LANGUAGES CXX)
 
 #
 # Debugging Options
@@ -36,22 +36,22 @@ LIST (APPEND CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}")
 SET (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 #
-# libicu is required for command line argument parsing
-#
-FIND_PACKAGE(ICU)
-FIND_PACKAGE(Threads)
-
-#
 # Options
 #
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(BUILD_BENCHPRESS_TESTS OFF CACHE BOOL "Enable benchpress Tests")
 set(BUILD_BENCHPRESS_EXAMPLES OFF CACHE BOOL "Enable benchpress Examples")
 
+add_library(benchpress INTERFACE)
+target_include_directories(benchpress INTERFACE ${PROJECT_SOURCE_DIR}/include)
+target_compile_features(benchpress INTERFACE cxx_std_14)
+
 #
 # Recurse source sub-directories
 #
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 add_subdirectory(src)
 
 find_program(CCACHE_PROGRAM ccache)
